@@ -1,0 +1,124 @@
+# MATHE-authentication: Topic Modeling and ML Analysis Platform
+
+A Flask-based web application for topic modeling, sentiment analysis, and text processing with a focus on Greek language content. This project integrates various machine learning techniques for analyzing journalistic content, including emotional classification and annotation.
+
+## Features
+
+- **Topic Modeling**: Analyze and extract topics from text data using NMF and LDA
+- **Sentiment Analysis**: Process and analyze sentiment in Greek text
+- **Text Summarization**: Generate summaries of long-form content
+- **File Processing**: Handle CSV file uploads and processing
+- **Content Annotation**: Annotate audio/video files with tampering detection
+- **Greek Language Support**: Specialized processing for Greek text content
+
+## Project Structure
+
+```
+MATHE-authentication/
+├── ML-techniques-on-journalistic-content-emotional-classification-and-annotation/
+│   ├── summarization/           # Text summarization models
+│   ├── skroutz_scraping/        # Web scraping utilities
+│   ├── sentimark/              # Sentiment analysis tools
+│   ├── neuralnet/              # Neural network models
+│   ├── greek hunspell/         # Greek language processing
+│   └── finallexformysenti/     # Sentiment analysis lexicons
+├── static/                     # Static files (CSS, JS, images)
+├── templates/                  # HTML templates
+├── data/                       # Data storage
+├── files/                      # Uploaded files
+├── main.py                     # Main Flask application
+├── topic_modelling.py          # Topic modeling implementation
+└── csv_handler.py              # CSV file processing utilities
+```
+
+## Prerequisites
+
+- Python 3.7+
+- Flask
+- scikit-learn
+- spaCy
+- pandas
+- matplotlib
+- WordCloud
+- Keras (for neural network models)
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone [repository-url]
+cd MATHE-authentication
+```
+
+2. Install required packages:
+```bash
+pip install -r requirements.txt
+```
+
+3. Download required language models:
+```bash
+python -m spacy download el_core_news_md
+```
+
+## Usage
+
+1. Start the Flask application:
+```bash
+python main.py
+```
+
+2. Access the web interface at `http://localhost:5000`
+
+3. Main features:
+   - Upload CSV files for topic modeling
+   - Analyze text sentiment
+   - Generate text summaries
+   - Annotate audio/video content
+   - View topic modeling results and visualizations
+
+## API Endpoints
+
+- `/`: Home page
+- `/topic_modelling`: Topic modeling analysis
+- `/contribute`: Content annotation interface
+- `/about`: About page
+- `/contact`: Contact information
+- `/files/<filename>`: File download endpoint
+
+## ML Components
+
+### Topic Modeling
+- Implements both NMF and LDA algorithms
+- Supports Greek language processing
+- Generates word clouds for visualization
+
+### Sentiment Analysis
+- Greek language sentiment analysis
+- Custom sentiment lexicons
+- Neural network-based classification
+
+### Text Summarization
+- Extractive summarization techniques
+- Support for Greek language content
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Greek language processing tools and resources
+- Open-source ML libraries and frameworks
+- Contributors and maintainers of the project
+
+## Contact
+
+For questions and support, please open an issue in the repository or contact the maintainers. 
