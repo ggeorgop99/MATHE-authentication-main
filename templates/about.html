@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Audio Authentication</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <style>
+        .loader {
+          border: 16px solid #f3f3f3;
+          border-radius: 50%;
+          border-top: 16px solid #3498db;
+          width: 120px;
+          height: 120px;
+          padding-top: 50px;
+          margin-top: 50px;
+          -webkit-animation: spin 2s linear infinite; /* Safari */
+          animation: spin 2s linear infinite;
+        }
+        /* Safari */
+        @-webkit-keyframes spin {
+          0% { -webkit-transform: rotate(0deg); }
+          100% { -webkit-transform: rotate(360deg); }
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+    </style>
+
+</head>
+<body>
+
+    <!--    menu-->
+	<nav class="navbar navbar-expand-lg navbar-dark " style="background-color: 	#800000;">
+    <a class="navbar-brand" href="/"><img src="../static/logo.png" height="40" class="d-inline-block align-top"  alt="">
+        <span class="align-bottom"> AudioVisual Content Authentication </span>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarColor01">
+      <ul class="navbar-nav mr-auto" style="margin-left:auto; margin-right:auto;">
+        <li class="nav-item ">
+          <a class="nav-link" href="/">Analyze</a>
+        </li>
+           <li class="nav-item">
+          <a class="nav-link" href="/contribute">Contribute</a>
+        </li>
+          <li class="nav-item active" >
+          <a class="nav-link" href="/about">About  <span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/contact">Contact</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+	
+	<div class = "container " style="height:30px"> </div>
+    <div class="container">
+        <p>The MAThe project is a research project of the <a href="http://m3c.web.auth.gr/">Multidisciplinary Media & Mediated Communication Research Group (M3C) </a> of the Aristotle University of Thessaloniki, introducing computational and gamification approaches in the fight against misinformation.
+        <p>Related publications:
+        <div class="list-group">
+            <a href="#" class="list-group-item list-group-item-action">Katsaounidou, A., Vrysis, L., Kotsakis, R., Dimoulas, C., & Veglis, A. (2019). MAthE the game: A serious game for education and training in news verification. Education Sciences, 9(2), 155.</a>
+            <a href="#" class="list-group-item list-group-item-action">Vryzas, N., Katsaounidou, A., Kotsakis, R., Dimoulas, C. A., & Kalliris, G. (2019, March). Audio-driven multimedia content authentication as a service. In Audio Engineering Society Convention 146. Audio Engineering Society.</a>
+            <a href="#" class="list-group-item list-group-item-action">Vryzas, N., Katsaounidou, A., Kotsakis, R., Dimoulas, C. A., & Kalliris, G. (2018, May). Investigation of audio tampering in broadcast content. In Audio Engineering Society Convention 144. Audio Engineering Society.</a>
+            <a href="#" class="list-group-item list-group-item-action">Katsaounidou, A., Dimoulas, C., & Veglis, A. (Eds.). (2018). Cross-media authentication and verification: emerging research and opportunities: emerging research and opportunities. IGI Global.</a>
+            <a href="#" class="list-group-item list-group-item-action">Katsaounidou, A. N., Gardikiotis, A., Tsipas, N., & Dimoulas, C. A. (2020). News authentication and tampered images: evaluating the photo-truth impact through image verification algorithms. Heliyon, 6(12), e05808.</a>
+            <a href="#" class="list-group-item list-group-item-action">Katsaounidou, A., Vryzas, N., Kotsakis, R., & Dimoulas, C. (2019). Multimodal news authentication as a service: The «True News» Extension. Redefining Communication: Social Media and the Age of Innovation, 11.</a>
+        </div>
+    
+	</div>
+
+
+	
+</body>
+</html>

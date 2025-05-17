@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        #invite-emails_tag {
+          placeholder: 'asdads';
+        }
+
+        .badtag {
+          border: solid 1px red !important;
+          background-color: #d24a4a !important;
+          color: white !important;
+        }
+
+        .badtag a {
+          color: #ad2b2b !important;
+        }
+    </style>
+</head>
+<body>
+`   <div class="team-invite" >
+      <p>Enter emails and we will invite your mates to join you.</p>
+      <input type="text" id='invite-emails' name='email' placeholder='enter emails here' size="30">
+      <br>
+      <!--<div data-value=""  id='style-email' style="padding-left: 12px; padding-right: 12px;">-->
+      <p id='subtext'>You can enter multiple emails with comma</p>
+    </div>
+
+    <script src='http://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.js'></script>
+    <script type="text/javascript">
+        $('#invite-emails').tagsInput({
+          'width': 'auto',
+          'delimiter': ',',
+          'defaultText': 'Enter email',
+          onAddTag: function(item) {
+            $($(".tagsinput").get(0)).find(".tag").each(function() {
+              if (!ValidateEmail($(this).text().trim().split(/(\s+)/)[0])) {
+                $(this).addClass("badtag");
+              }
+            });
+          },
+          'onChange': function(item) {
+                $($(".tagsinput").get(0)).find(".tag").each(function() {
+              if (!ValidateEmail($(this).text().trim().split(/(\s+)/)[0])) {
+                $(this).addClass("badtag");
+              }
+            });
+          }
+
+        });
+
+        $('.team-btn').click(function() {
+          $('.team-intro').replaceWith($(".team-invite").clone(true, true).show());
+
+        });
+
+
+
+        function ValidateEmail(mail) {
+          if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail)) {
+            return (true)
+          }
+          return (false)
+        }
+    </script>
+</body>
+</html>
