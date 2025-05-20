@@ -35,32 +35,51 @@ def load_unannotated_texts():
 
 def save_annotated_text(text_id, sentiment, comments):
     """Save annotated text to a file"""
-    # Load the original text
-    original_text = None
-    for text in UNANNOTATED_TEXTS:
-        if text['id'] == text_id:
-            original_text = text
-            break
-    
-    if not original_text:
-        logger.error(f"Text with ID {text_id} not found")
-        return False
-
-    annotation = {
-        'text_id': text_id,
-        'text': original_text['text'],
-        'source': original_text['source'],
-        'sentiment': sentiment,
-        'comments': comments,
-        'timestamp': datetime.now().isoformat()
-    }
-    
-    # Save to file
     try:
+        # Load all unannotated texts to find the original
+        with open('data/unannotated_texts.json', 'r', encoding='utf-8') as f:
+            all_texts = json.load(f)
+        
+        # Find the original text
+        original_text = None
+        for text in all_texts:
+            if text['id'] == text_id:
+                original_text = text
+                break
+        
+        if not original_text:
+            logger.error(f"Text with ID {text_id} not found")
+            return False
+
+        annotation = {
+            'text_id': text_id,
+            'text': original_text['text'],
+            'source': original_text['source'],
+            'sentiment': sentiment,
+            'comments': comments,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        # Create annotations directory if it doesn't exist
         os.makedirs('data/annotations', exist_ok=True)
-        with open('data/annotations/annotated_texts.json', 'a', encoding='utf-8') as f:
-            json.dump(annotation, f, ensure_ascii=False)
-            f.write('\n')
+        
+        # Create or append to the annotations file
+        annotations_file = 'data/annotations/annotated_texts.json'
+        try:
+            # Try to load existing annotations
+            with open(annotations_file, 'r', encoding='utf-8') as f:
+                annotations = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            # If file doesn't exist or is empty, start with empty list
+            annotations = []
+        
+        # Add new annotation
+        annotations.append(annotation)
+        
+        # Save all annotations
+        with open(annotations_file, 'w', encoding='utf-8') as f:
+            json.dump(annotations, f, ensure_ascii=False, indent=2)
+        
         return True
     except Exception as e:
         logger.error(f"Error saving annotation: {str(e)}")
@@ -188,19 +207,38 @@ def upload_dataset():
 @app.route('/api/next-text')
 def get_next_text():
     """Get next text for annotation"""
-    global UNANNOTATED_TEXTS
-    
-    if not UNANNOTATED_TEXTS:
-        UNANNOTATED_TEXTS = load_unannotated_texts()
-    
-    if not UNANNOTATED_TEXTS:
+    try:
+        # Load all unannotated texts
+        with open('data/unannotated_texts.json', 'r', encoding='utf-8') as f:
+            all_texts = json.load(f)
+        
+        # Load already annotated texts
+        try:
+            with open('data/annotations/annotated_texts.json', 'r', encoding='utf-8') as f:
+                annotated_texts = json.load(f)
+                annotated_ids = {text['text_id'] for text in annotated_texts}
+        except (FileNotFoundError, json.JSONDecodeError):
+            annotated_ids = set()
+        
+        # Filter out already annotated texts
+        available_texts = [text for text in all_texts if text['id'] not in annotated_ids]
+        
+        if not available_texts:
+            return jsonify({
+                'text': 'No more texts to annotate. Thank you for your contribution!',
+                'id': None
+            })
+        
+        # Return a random text from available texts
+        text = random.choice(available_texts)
+        return jsonify(text)
+        
+    except Exception as e:
+        logger.error(f"Error getting next text: {str(e)}")
         return jsonify({
-            'text': 'No more texts to annotate. Thank you for your contribution!',
+            'text': 'Error loading text. Please try again.',
             'id': None
         })
-    
-    text = UNANNOTATED_TEXTS.pop(0)
-    return jsonify(text)
 
 @app.route('/contribute/annotate', methods=['POST'])
 def submit_annotation():

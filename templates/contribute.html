@@ -66,6 +66,7 @@
     color: var(--primary-color);
     transition: all 0.3s ease;
     font-weight: 500;
+    cursor: pointer;
   }
 
   .sentiment-btn:hover, .sentiment-btn.active {
@@ -83,6 +84,11 @@
   .sentiment-btn.negative.active {
     background: #dc3545;
     border-color: #dc3545;
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 </style>
 {% endblock %}
@@ -139,7 +145,7 @@
               <div class="text-to-annotate">
                 <p id="text-to-annotate">Loading text sample...</p>
               </div>
-              <form method="POST" action="/contribute/annotate">
+              <form id="annotation-form" method="POST" action="/contribute/annotate">
                 <input type="hidden" name="text_id" id="text-id">
                 <div class="sentiment-options">
                   <button type="button" class="sentiment-btn positive" data-sentiment="positive">
@@ -154,7 +160,7 @@
                   <label>Additional Comments (Optional)</label>
                   <textarea class="form-control" name="comments" rows="2"></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">Submit Annotation</button>
+                <button type="submit" class="btn btn-primary submit-btn" id="submit-annotation" disabled>Submit Annotation</button>
                 <button type="button" class="btn btn-secondary" onclick="loadNewText()">Skip</button>
               </form>
             </div>
@@ -173,6 +179,7 @@
       document.querySelectorAll('.sentiment-btn').forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       document.getElementById('selected-sentiment').value = this.dataset.sentiment;
+      document.getElementById('submit-annotation').disabled = false;
     });
   });
 
@@ -181,10 +188,20 @@
     fetch('/api/next-text')
       .then(response => response.json())
       .then(data => {
-        document.getElementById('text-to-annotate').textContent = data.text;
-        document.getElementById('text-id').value = data.id;
-        document.querySelectorAll('.sentiment-btn').forEach(btn => btn.classList.remove('active'));
-        document.getElementById('selected-sentiment').value = '';
+        if (data.id) {
+          document.getElementById('text-to-annotate').textContent = data.text;
+          document.getElementById('text-id').value = data.id;
+          document.querySelectorAll('.sentiment-btn').forEach(btn => btn.classList.remove('active'));
+          document.getElementById('selected-sentiment').value = '';
+          document.getElementById('submit-annotation').disabled = true;
+        } else {
+          document.getElementById('text-to-annotate').textContent = 'No more texts to annotate. Thank you for your contribution!';
+          document.getElementById('annotation-form').style.display = 'none';
+        }
+      })
+      .catch(error => {
+        console.error('Error loading text:', error);
+        document.getElementById('text-to-annotate').textContent = 'Error loading text. Please try again.';
       });
   }
 
