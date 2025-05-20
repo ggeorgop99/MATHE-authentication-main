@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}MATHE Text Analysis Platform{% endblock %}</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='logo.png') }}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='logo.png') }}">
+  <link rel="icon" type="image/svg+xml" sizes="any" href="{{ url_for('static', filename='mathelogotrans.svg') }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='logo.png') }}">
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
@@ -30,6 +37,23 @@
     .navbar {
       background-color: var(--primary-color) !important;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 0.8rem 1rem;
+    }
+
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .navbar-brand img {
+      height: 50px;
+      width: auto;
+    }
+
+    .navbar-brand span {
+      font-size: 1.4rem;
+      font-weight: 500;
     }
 
     .btn-primary {
@@ -86,6 +110,16 @@
     .alert .close:hover {
       opacity: 1;
     }
+
+    @media (max-width: 768px) {
+      .navbar-brand img {
+        height: 40px;
+      }
+      
+      .navbar-brand span {
+        font-size: 1.2rem;
+      }
+    }
   </style>
 
   {% block extra_styles %}{% endblock %}
@@ -95,8 +129,8 @@
   <!-- Navigation -->
   <nav class="navbar navbar-expand-lg navbar-dark">
     <a class="navbar-brand" href="/">
-      <img src="../static/logo.png" height="40" class="d-inline-block align-top" alt="MATHE Logo">
-      <span class="align-bottom">MATHE Text Analysis Platform</span>
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="MATHE Logo">
+      <span>MATHE Text Analysis Platform</span>
     </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
       <span class="navbar-toggler-icon"></span>
