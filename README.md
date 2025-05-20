@@ -1,4 +1,4 @@
-# MATHE-authentication: Topic Modeling and ML Analysis Platform
+# MATHE Text Analysis Platform
 
 A Flask-based web application for topic modeling, sentiment analysis, and text processing with a focus on Greek language content. This project integrates various machine learning techniques for analyzing journalistic content, including emotional classification and annotation.
 
@@ -28,24 +28,28 @@ The models trained in that repository are then used by this web application for 
 ## Project Structure
 
 ```
-MATHE-authentication/
-├── ML-techniques-on-journalistic-content-emotional-classification-and-annotation/
-│   ├── summarization/           # Text summarization models
-│   ├── skroutz_scraping/        # Web scraping utilities
-│   ├── sentimark/              # Sentiment analysis tools
-│   ├── neuralnet/              # Neural network models
-│   ├── greek hunspell/         # Greek language processing
-│   └── finallexformysenti/     # Sentiment analysis lexicons
-├── static/                     # Static files (CSS, JS, images)
-├── templates/                  # HTML templates
-├── data/                       # Data storage
-│   ├── datasets/              # Uploaded labeled datasets
-│   ├── annotations/           # Sentiment annotations
-│   └── unannotated_texts.json # Texts for annotation
-├── files/                      # Uploaded files
-├── main.py                     # Main Flask application
-├── topic_modelling.py          # Topic modeling implementation
-└── csv_handler.py              # CSV file processing utilities
+MATHE-authentication-main/
+├── data/
+│   ├── datasets/          # Uploaded CSV datasets
+│   └── annotations/       # Annotations data
+├── files/
+│   └── temp/             # Temporary storage for uploaded files
+├── static/
+│   ├── css/              # Stylesheets
+│   ├── js/               # JavaScript files
+│   └── wordclouds/       # Generated word cloud images
+├── templates/
+│   ├── base.html         # Base template with common elements
+│   ├── home.html         # Landing page
+│   ├── analyze.html      # File upload and analysis page
+│   ├── analysis_results.html  # Results display page
+│   ├── about.html        # About page
+│   └── contact.html      # Contact page
+├── main.py               # Main Flask application
+├── csv_handler.py        # CSV file processing utilities
+├── text_processing.py    # Text processing and word cloud generation
+├── topic_modelling.py    # Topic modeling implementation
+└── requirements.txt      # Python dependencies
 ```
 
 ## Prerequisites
