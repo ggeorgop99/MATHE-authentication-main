@@ -72,56 +72,43 @@
     display: none;
   }
 
-  .file-name {
-    margin-top: 10px;
-    font-size: 0.9rem;
-    color: #6c757d;
-  }
-
-  .options-section {
-    margin-top: 30px;
-  }
-
-  .option-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 25px;
-    margin-bottom: 20px;
+  .file-preview {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
     border: 1px solid #dee2e6;
-    transition: all 0.3s ease;
   }
 
-  .option-card:hover {
-    border-color: var(--primary-color);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  .selected-file {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   }
 
-  .option-card h3 {
+  .selected-file i {
     color: var(--primary-color);
-    font-size: 1.3rem;
-    margin-bottom: 15px;
-    font-weight: 600;
+    font-size: 1.2rem;
   }
 
-  .option-card p {
-    color: #6c757d;
-    margin-bottom: 20px;
+  .selected-file span {
+    flex-grow: 1;
+    color: #2d3748;
+    font-weight: 500;
   }
 
-  .form-check {
-    margin-bottom: 15px;
+  .btn-outline-danger {
+    padding: 4px 8px;
+    font-size: 0.9rem;
   }
 
-  .form-check-input {
-    width: 1.2em;
-    height: 1.2em;
-    margin-top: 0.2em;
-  }
-
-  .form-check-label {
-    font-size: 1.1rem;
-    color: #495057;
-    padding-left: 10px;
+  .upload-section.has-file {
+    border-color: var(--primary-color);
+    background: #f8f9fa;
   }
 
   .btn-analyze {
@@ -140,6 +127,11 @@
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     background: var(--primary-color-dark);
+  }
+
+  .btn-analyze:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
   .features-section {
@@ -241,34 +233,29 @@
         <div class="upload-section" id="dropZone">
           <div class="text-center">
             <div class="upload-icon">
-              <i class="fas fa-cloud-upload-alt"></i>
+              <i class="fas fa-file-csv"></i>
             </div>
             <div class="upload-text">
               <p>Drag and drop your CSV file here or click to browse</p>
-              <input type="file" name="audiofile" id="fileInput" class="file-input" accept=".csv">
+              <input type="file" name="csvfile" id="fileInput" class="file-input" accept=".csv">
               <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
-                Choose File
+                <i class="fas fa-folder-open"></i> Choose CSV File
               </button>
             </div>
-            <div class="file-name" id="fileName"></div>
-          </div>
-        </div>
-
-        <div class="options-section">
-          <div class="option-card">
-            <h3>File Type</h3>
-            <p>Select the type of file you want to analyze:</p>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="audiofileradio" id="csvOption" value="csv" checked>
-              <label class="form-check-label" for="csvOption">
-                CSV File
-              </label>
+            <div class="file-preview" id="filePreview" style="display: none;">
+              <div class="selected-file">
+                <i class="fas fa-file-csv"></i>
+                <span id="selectedFileName"></span>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearFile()">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         <div class="text-center mt-4">
-          <button type="submit" name="action" value="Analyze" class="btn btn-analyze">
+          <button type="submit" name="action" value="Analyze" class="btn btn-analyze" id="analyzeButton" disabled>
             <i class="fas fa-chart-bar mr-2"></i> Analyze Text
           </button>
         </div>
@@ -310,29 +297,64 @@
 </div>
 
 <script>
+// Global function for clearing file
+function clearFile() {
+  const fileInput = document.getElementById('fileInput');
+  const filePreview = document.getElementById('filePreview');
+  const selectedFileName = document.getElementById('selectedFileName');
+  const dropZone = document.getElementById('dropZone');
+  const analyzeButton = document.getElementById('analyzeButton');
+  
+  fileInput.value = '';
+  selectedFileName.textContent = '';
+  filePreview.style.display = 'none';
+  dropZone.classList.remove('has-file');
+  analyzeButton.disabled = true;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   const dropZone = document.getElementById('dropZone');
   const fileInput = document.getElementById('fileInput');
-  const fileName = document.getElementById('fileName');
+  const filePreview = document.getElementById('filePreview');
+  const selectedFileName = document.getElementById('selectedFileName');
+  const analyzeButton = document.getElementById('analyzeButton');
+
+  // Reset form state on page load
+  clearFile();
+
+  function updateFileUI(file) {
+    if (file) {
+      selectedFileName.textContent = file.name;
+      filePreview.style.display = 'block';
+      dropZone.classList.add('has-file');
+      analyzeButton.disabled = false;
+    } else {
+      filePreview.style.display = 'none';
+      dropZone.classList.remove('has-file');
+      analyzeButton.disabled = true;
+    }
+  }
 
   // Handle file selection
   fileInput.addEventListener('change', function(e) {
     if (this.files && this.files[0]) {
-      fileName.textContent = this.files[0].name;
+      updateFileUI(this.files[0]);
     }
   });
 
   // Handle drag and drop
   dropZone.addEventListener('dragover', function(e) {
     e.preventDefault();
-    this.style.borderColor = var(--primary-color);
+    this.style.borderColor = 'var(--primary-color)';
     this.style.background = '#f8f9fa';
   });
 
   dropZone.addEventListener('dragleave', function(e) {
     e.preventDefault();
-    this.style.borderColor = '#dee2e6';
-    this.style.background = '#fff';
+    if (!fileInput.files.length) {
+      this.style.borderColor = '#dee2e6';
+      this.style.background = '#fff';
+    }
   });
 
   dropZone.addEventListener('drop', function(e) {
@@ -342,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       fileInput.files = e.dataTransfer.files;
-      fileName.textContent = e.dataTransfer.files[0].name;
+      updateFileUI(e.dataTransfer.files[0]);
     }
   });
 });

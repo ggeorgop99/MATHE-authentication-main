@@ -7,6 +7,7 @@ import json
 import csv_handler
 import topic_modelling as tm
 import text_processing as tp
+from werkzeug.utils import secure_filename
 
 # Set up logging
 logging.basicConfig(
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = os.urandom(24)
+app.config['UPLOAD_FOLDER'] = 'files/temp'
 
 # Create required directories
 for directory in ['data/datasets', 'data/annotations', 'files/temp', 'static']:
@@ -90,97 +92,75 @@ def home():
     """Home page with feature cards"""
     return render_template('home.html')
 
-@app.route('/analyze')
+@app.route('/analyze', methods=['GET', 'POST'])
 def analyze():
-    """Analysis page with file upload form"""
-    return render_template('analyze.html')
+    if request.method == 'POST':
+        if 'action' not in request.form:
+            flash('Invalid form submission', 'danger')
+            return redirect(request.url)
 
-@app.route('/analyze', methods=['POST'])
-def process_file():
-    """Process uploaded file and redirect to analysis"""
-    if 'action' not in request.form:
-        flash('Invalid form submission', 'error')
-        return redirect(url_for('analyze'))
-
-    if request.form["action"] == 'Analyze':
-        option = request.form.get('audiofileradio', 'csv')
-        logger.info(f"Processing file with option: {option}")
-
-        if option == 'csv':
-            if 'audiofile' not in request.files:
-                flash('No file part', 'error')
-                return redirect(url_for('analyze'))
-
-            uploaded_file = request.files['audiofile']
-            if uploaded_file.filename == '':
-                flash('No file selected', 'error')
-                return redirect(url_for('analyze'))
-
-            if not uploaded_file.filename.endswith('.csv'):
-                flash('Only CSV files are allowed', 'error')
-                return redirect(url_for('analyze'))
-
-            # Save the uploaded file
-            filepath = os.path.join('files/temp', uploaded_file.filename)
-            uploaded_file.save(filepath)
-
-            try:
-                # Get file preview and column info
+        if request.form['action'] == 'Analyze':
+            if 'csvfile' not in request.files:
+                flash('No file selected', 'danger')
+                return redirect(request.url)
+            
+            file = request.files['csvfile']
+            if file.filename == '':
+                flash('No file selected', 'danger')
+                return redirect(request.url)
+            
+            if file and file.filename.endswith('.csv'):
+                filename = secure_filename(file.filename)
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
+                
+                # Generate preview and column info
                 preview = csv_handler.get_preview(filepath)
                 column_info = csv_handler.get_column_info(filepath)
                 
-                # Generate wordcloud
-                if tp.generate_wordcloud(filepath):
-                    logger.info("Wordcloud generated successfully")
-                else:
-                    logger.warning("Failed to generate wordcloud")
+                # Generate word cloud
+                tp.generate_wordcloud(filepath)
                 
-                return render_template(
-                    'home_return.html',
-                    results_csv=preview,
-                    column_info=column_info,
-                    filepath=filepath
-                )
-            except Exception as e:
-                logger.error(f"Error processing CSV file: {str(e)}")
-                flash('Error processing file. Please try again.', 'error')
-                return redirect(url_for('analyze'))
+                return render_template('analysis_results.html', 
+                                     filepath=filename,
+                                     results_csv=preview,
+                                     column_info=column_info)
+            else:
+                flash('Please upload a CSV file', 'danger')
+                return redirect(request.url)
         else:
-            flash('Invalid file type selected', 'error')
-            return redirect(url_for('analyze'))
-    else:
-        flash('Invalid action', 'error')
-        return redirect(url_for('analyze'))
-
-@app.route('/topic_modelling')
-def topic_modelling_form():
-    """Display topic modeling form"""
-    results_csv = request.args.get('results_csv', 'Unknown results')
-    filepath = request.args.get('filepath', 'Unknown path')
-    return render_template('home_return.html', results_csv=results_csv, filepath=filepath)
+            flash('Invalid action', 'danger')
+            return redirect(request.url)
+    
+    return render_template('analyze.html')
 
 @app.route('/topic_modelling', methods=['POST'])
-def topic_modelling_form_results():
-    """Process topic modeling form"""
-    try:
-        filepath = request.args.get('filepath', 'Unknown path')
-        number_topics = int(request.form.get('no_topics', 5))
-        number_words = int(request.form.get('no_words', 10))
-        mode = request.form.get('mode', 'tfidf')
-
-        results_topic_modelling = tm.topic_modelling_function(
-            mode, number_topics, number_words, filepath
-        )
-
-        return render_template(
-            'home_return.html',
-            filepath=filepath,
-            results_topic_modelling=results_topic_modelling
-        )
-    except Exception as e:
-        logger.error(f"Error in topic modeling: {str(e)}")
-        flash('Error performing topic modeling. Please try again.', 'error')
+def topic_modelling_form():
+    # Get parameters from form
+    no_topics = int(request.form.get('no_topics', 5))
+    no_words = int(request.form.get('no_words', 10))
+    mode = request.form.get('mode', 'tfidf')
+    
+    # Get the filepath from the session or request
+    filepath = request.form.get('filepath')
+    if not filepath:
+        flash('No file selected for analysis', 'danger')
         return redirect(url_for('analyze'))
+    
+    full_filepath = os.path.join(app.config['UPLOAD_FOLDER'], filepath)
+    
+    # Run topic modeling
+    results = tm.topic_modelling_function(full_filepath, no_topics, no_words, mode)
+    
+    # Get preview and column info again
+    preview = csv_handler.get_preview(full_filepath)
+    column_info = csv_handler.get_column_info(full_filepath)
+    
+    return render_template('analysis_results.html',
+                         filepath=filepath,
+                         results_csv=preview,
+                         column_info=column_info,
+                         results_topic_modelling=results)
 
 @app.route('/contribute')
 def contribute():
