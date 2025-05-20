@@ -1,125 +1,289 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Audio Authentication</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-    <script src="jquery-3.5.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.min.js" integrity="sha512-9UR1ynHntZdqHnwXKTaOm1s6V9fExqejKvg5XMawEMToW4sSw+3jtLrYfZPijvnwnnE8Uol1O9BcAskoxgec+g==" crossorigin="anonymous"></script>
+{% extends "base.html" %}
 
+{% block title %}MATHE Text Analysis Platform - Analysis Results{% endblock %}
 
+{% block extra_styles %}
+<style>
+  .results-section {
+    padding: 40px 0;
+  }
 
+  .results-card {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
 
-</head>
+  .preview-section {
+    margin-bottom: 40px;
+  }
 
+  .preview-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
 
-<!--<script>-->
-<!--function includeHTML() {-->
-<!--  var z, i, elmnt, file, xhttp;-->
-<!--  /*loop through a collection of all HTML elements:*/-->
-<!--  z = document.getElementsByTagName("*");-->
-<!--  for (i = 0; i < z.length; i++) {-->
-<!--    elmnt = z[i];-->
-<!--    /*search for elements with a certain atrribute:*/-->
-<!--    file = elmnt.getAttribute("w3-include-html");-->
-<!--    if (file) {-->
-<!--      /*make an HTTP request using the attribute value as the file name:*/-->
-<!--      xhttp = new XMLHttpRequest();-->
-<!--      xhttp.onreadystatechange = function() {-->
-<!--        if (this.readyState == 4) {-->
-<!--          if (this.status == 200) {elmnt.innerHTML = this.responseText;}-->
-<!--          if (this.status == 404) {elmnt.innerHTML = "Page not found.";}-->
-<!--          /*remove the attribute, and call this function once more:*/-->
-<!--          elmnt.removeAttribute("w3-include-html");-->
-<!--          includeHTML();-->
-<!--        }-->
-<!--      }-->
-<!--      xhttp.open("GET", file, true);-->
-<!--      xhttp.send();-->
-<!--      /*exit the function:*/-->
-<!--      return;-->
-<!--    }-->
-<!--  }-->
-<!--};-->
-<!--</script>-->
+  .preview-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    font-size: 14px;
+  }
 
+  .preview-table th {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px;
+    text-align: left;
+    font-weight: 500;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
+  }
 
+  .preview-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+    word-break: break-word;
+    max-width: 300px;
+  }
 
-<body>
-	<nav class="navbar navbar-expand-lg navbar-dark " style="background-color: 	#800000;">
-    <a class="navbar-brand" href="/"><img src="../static/logo.png" height="40" class="d-inline-block align-top"  alt="">
-        <span class="align-bottom"> AudioVisual Content Authentication </span>
-    </a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+  .preview-table tr:last-child td {
+    border-bottom: none;
+  }
 
-    <div class="collapse navbar-collapse" id="navbarColor01">
-      <ul class="navbar-nav mr-auto" style="margin-left:auto; margin-right:auto;">
-        <li class="nav-item active">
-          <a class="nav-link" href="/">Analyze <span class="sr-only">(current)</span></a>
-        </li>
-           <li class="nav-item">
-          <a class="nav-link" href="/contribute">Contribute</a>
-        </li>
-          <li class="nav-item">
-          <a class="nav-link" href="/about">About</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/contact">Contact</a>
-        </li>
-      </ul>
-    </div>
-  </nav>
-	
-	<div class = "container " style="height:30px"></div>
+  .preview-table tr:nth-child(even) {
+    background-color: #f8f9fa;
+  }
+
+  .preview-table tr:hover {
+    background-color: #f0f2f5;
+  }
+
+  .preview-table td:first-child {
+    font-weight: 500;
+    color: #2c3e50;
+    white-space: nowrap;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -15px;
+    padding: 0 15px;
+  }
+
+  .column-info {
+    margin-bottom: 30px;
+  }
+
+  .column-info h3 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+
+  .column-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease;
+  }
+
+  .column-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .column-card h5 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-weight: 600;
+  }
+
+  .column-card p {
+    margin-bottom: 8px;
+    color: #4a5568;
+  }
+
+  .column-card strong {
+    color: #2d3748;
+  }
+
+  .wordcloud-section {
+    margin: 40px 0;
+    text-align: center;
+    padding: 30px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .wordcloud-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 25px;
+    font-weight: 600;
+  }
+
+  .wordcloud-section img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .topic-modelling-form {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    margin-top: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .topic-modelling-form h2 {
+    color: var(--primary-color);
+    margin-bottom: 25px;
+    font-weight: 600;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-control {
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    transition: border-color 0.2s ease;
+  }
+
+  .form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+  }
+
+  .btn-primary {
+    padding: 12px 30px;
+    border-radius: 30px;
+    font-weight: 500;
+    transition: transform 0.2s ease;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+  }
+
+  .topic-modelling-results {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+  }
+
+  .topic-modelling-results h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    .preview-table {
+      font-size: 13px;
+    }
+
+    .preview-table th,
+    .preview-table td {
+      padding: 10px;
+    }
+
+    .preview-table td {
+      max-width: 200px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <div class="results-section">
     <div class="container">
+      <div class="results-card">
+        <h2 class="mb-4">Analysis Results</h2>
+        <p class="lead">File: {{ filepath }}</p>
 
-        <h1>Analysis complete!</h1>
-        {{filepath}}
-        {{results_csv}}
-        <img src="../static/my_wordcloud.png" height="500" class="d-inline-block align-top">
-        {{results_topic_modelling}}
-    </div>
+        {% if results_csv is defined %}
+          <div class="preview-section">
+            <h3>Data Preview</h3>
+            <div class="table-responsive">
+              {{ results_csv | safe }}
+            </div>
+          </div>
+        {% endif %}
 
-
-    <div class="container">
-
-        <h1>Topic Modelling Configuration</h1>
-
-        <form method ="POST">
-            <!-- source -->
-            <div class="form-row pt-3" style="padding:5px">
-                <div class="mb-3">
-                    <label for="no_topics" class="form-label">Number of Topics</label>
-                    <input type="number" class="form-control" id="no_topics" name="no_topics" placeholder="Enter a number" required min="1" max="20">
+        {% if column_info is defined %}
+          <div class="column-info">
+            <h3>Column Information</h3>
+            <div class="row">
+              {% for column, info in column_info.items() %}
+                <div class="col-md-4">
+                  <div class="column-card">
+                    <h5>{{ column }}</h5>
+                    <p><strong>Type:</strong> {{ info.dtype }}</p>
+                    <p><strong>Non-null values:</strong> {{ info.non_null }}</p>
+                    <p><strong>Unique values:</strong> {{ info.unique }}</p>
+                  </div>
                 </div>
+              {% endfor %}
             </div>
+          </div>
+        {% endif %}
 
+        <div class="wordcloud-section">
+          <h3>Word Cloud Visualization</h3>
+          <img src="../static/my_wordcloud.png" alt="Word Cloud" class="img-fluid">
+        </div>
 
-             <div class="form-row pt-3" style="padding:5px">
-                <div class="mb-3">
-                    <label for="no_words" class="form-label">Number of Words per Topic</label>
-                    <input type="number" class="form-control" id="no_words" name="no_words" placeholder="Enter a number" required min="1" max="10">
-                </div>
-            </div>
+        {% if results_topic_modelling is defined %}
+          <div class="topic-modelling-results">
+            <h3>Topic Modelling Results</h3>
+            {{ results_topic_modelling | safe }}
+          </div>
+        {% endif %}
+      </div>
 
+      <div class="topic-modelling-form">
+        <h2>Topic Modelling Configuration</h2>
+        <form method="POST">
+          <div class="form-group">
+            <label for="no_topics">Number of Topics</label>
+            <input type="number" class="form-control" id="no_topics" name="no_topics" 
+                   placeholder="Enter a number" required min="1" max="20" value="5">
+          </div>
 
-            <div class="form-row pt-3" style="padding:5px">
-                <label for="mode" class="form-label">Select Option:</label>
-                <select class="form-select" id="mode" name="mode">
-                    <option value="tfidf">TF-IDF</option>
-                </select>
-            </div>
+          <div class="form-group">
+            <label for="no_words">Number of Words per Topic</label>
+            <input type="number" class="form-control" id="no_words" name="no_words" 
+                   placeholder="Enter a number" required min="1" max="10" value="10">
+          </div>
 
-            <div class="form-row pt-3" style="padding-left:5px">
-                <input class="btn btn-primary" type="submit" value="Submit">
-            </div>
+          <div class="form-group">
+            <label for="mode">Select Option:</label>
+            <select class="form-control" id="mode" name="mode">
+              <option value="tfidf">TF-IDF</option>
+            </select>
+          </div>
 
+          <button type="submit" class="btn btn-primary">Run Topic Modelling</button>
+        </form>
+      </div>
     </div>
-
-</body>
-</html>
+  </div>
+{% endblock %}
