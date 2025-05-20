@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}MATHE Text Analysis Platform - Analyze{% endblock %}
+
+{% block extra_styles %}
+<style>
+  .upload-section {
+    background: white;
+    border-radius: 8px;
+    padding: 30px;
+    margin-top: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <!-- Upload Section -->
+  <div class="container">
+    <div class="upload-section">
+      <h2 class="mb-4">Analyze Your Text</h2>
+      <form id="forma" method="POST" enctype="multipart/form-data">
+        <div class="form-row pt-3">
+          <div class="form-group">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="audiofileradio" id="audiofileradio" value="csv" onclick="enableaudio(this)" checked>
+              <label for="audiofile">Upload CSV file to investigate</label>
+              <input name="audiofile" type="file" accept=".csv" class="form-control-file" id="audiofile">
+            </div>
+          </div>
+        </div>
+        <div class="form-row pt-3">
+          <input class="btn btn-primary" name="action" value="analysis" type="submit" onclick="loader(this)">
+        </div>
+      </form>
+      <div id="spinner" class="loader" style="visibility: hidden;"></div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function enableaudio(source) {
+    document.getElementById("audiofile").disabled = false;
+    document.getElementById("videofile").disabled = true;
+    document.getElementById("url").disabled = true;
+  }
+
+  function enablevideo(source) {
+    document.getElementById("audiofile").disabled = true;
+    document.getElementById("videofile").disabled = false;
+    document.getElementById("url").disabled = true;
+  }
+
+  function enableurl(source) {
+    document.getElementById("audiofile").disabled = true;
+    document.getElementById("videofile").disabled = true;
+    document.getElementById("url").disabled = false;
+  }
+
+  function loader(source) {
+    document.getElementById("spinner").style.visibility = "visible";
+  }
+</script>
+{% endblock %} 

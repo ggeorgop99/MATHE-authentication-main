@@ -1,72 +1,79 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Audio Authentication</title>
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-    <style>
-        .loader {
-          border: 16px solid #f3f3f3;
-          border-radius: 50%;
-          border-top: 16px solid #3498db;
-          width: 120px;
-          height: 120px;
-          padding-top: 50px;
-          margin-top: 50px;
-          -webkit-animation: spin 2s linear infinite; /* Safari */
-          animation: spin 2s linear infinite;
-        }
-        /* Safari */
-        @-webkit-keyframes spin {
-          0% { -webkit-transform: rotate(0deg); }
-          100% { -webkit-transform: rotate(360deg); }
-        }
+{% extends "base.html" %}
 
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-    </style>
+{% block title %}MATHE Text Analysis Platform - Contact{% endblock %}
 
-</head>
-<body>
+{% block extra_styles %}
+<style>
+  .contact-section {
+    padding: 80px 0;
+  }
 
-    <!--    menu-->
-	<nav class="navbar navbar-expand-lg navbar-dark " style="background-color: 	#800000;">
-    <a class="navbar-brand" href="/"><img src="../static/logo.png" height="40" class="d-inline-block align-top"  alt="">
-        <span class="align-bottom"> AudioVisual Content Authentication </span>
-    </a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+  .contact-card {
+    background: white;
+    border-radius: 12px;
+    padding: 40px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
 
-    <div class="collapse navbar-collapse" id="navbarColor01">
-      <ul class="navbar-nav mr-auto" style="margin-left:auto; margin-right:auto;">
-        <li class="nav-item">
-          <a class="nav-link" href="/">Analyze </a>
-        </li>
-           <li class="nav-item">
-          <a class="nav-link" href="/contribute">Contribute</a>
-        </li>
-          <li class="nav-item">
-          <a class="nav-link" href="/about">About</a>
-        </li>
-        <li class="nav-item active">
-          <a class="nav-link" href="/contact">Contact <span class="sr-only">(current)</span></a>
-        </li>
-      </ul>
-    </div>
-  </nav>
-	
-	<div class = "container " style="height:30px"> </div>
+  .contact-info {
+    margin-bottom: 30px;
+  }
+
+  .contact-icon {
+    font-size: 2rem;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+  }
+
+  .contact-form .form-control {
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 20px;
+  }
+
+  .contact-form textarea.form-control {
+    min-height: 150px;
+  }
+
+  .map-section {
+    height: 400px;
+    margin-top: 50px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <!-- Contact Section -->
+  <section class="contact-section">
     <div class="container">
-        If you require further information or wish to contribute feel free to contact <a href="mailto:nvryzas@auth.gr">Nikolaos Vryzas</a>.<br>
-	</div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="contact-card">
+            <h2 class="mb-4">Contact Information</h2>
+            <div class="contact-info">
+              <i class="fas fa-envelope contact-icon"></i>
+              <h4>Contact</h4>
+              <p>If you require further information or wish to contribute feel free to contact <a href="mailto:nvryzas@auth.gr">Nikolaos Vryzas</a>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-
-	
-</body>
-</html>
+      <!-- Map Section -->
+      <div class="map-section">
+        <iframe 
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d757.0018576393836!2d22.954073539215106!3d40.62971810000002!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14a838fe498568fd%3A0xb8e26a291b3606b4!2zRc-BzrPOsc-Dz4TOrs-BzrnOvyBIzrvOtc66z4TPgc6_zr3Ouc66z47OvSBNTUU!5e0!3m2!1sel!2sgr!4v1747738364654!5m2!1sel!2sgr" 
+          width="100%" 
+          height="100%" 
+          style="border:0;" 
+          allowfullscreen="" 
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+      </div>
+    </div>
+  </section>
+{% endblock %}

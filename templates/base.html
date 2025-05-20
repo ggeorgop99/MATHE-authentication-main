@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}MATHE Text Analysis Platform{% endblock %}</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+  <!-- Base Styles -->
+  <style>
+    :root {
+      --primary-color: #800000;
+      --secondary-color: #f8f9fa;
+      --accent-color: #6c757d;
+    }
+
+    body {
+      background-color: #f5f5f5;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    .navbar {
+      background-color: var(--primary-color) !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      padding: 12px 30px;
+      font-weight: 500;
+      border-radius: 30px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: #600000;
+      border-color: #600000;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .flash-messages {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    .alert {
+      background-color: white;
+      border: none;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      min-width: 300px;
+    }
+
+    .alert-success {
+      border-left: 4px solid #28a745;
+    }
+
+    .alert-error {
+      border-left: 4px solid #dc3545;
+    }
+
+    .alert-warning {
+      border-left: 4px solid #ffc107;
+    }
+
+    .alert-info {
+      border-left: 4px solid #17a2b8;
+    }
+
+    .alert .close {
+      color: #6c757d;
+      opacity: 0.5;
+    }
+
+    .alert .close:hover {
+      opacity: 1;
+    }
+  </style>
+
+  {% block extra_styles %}{% endblock %}
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <a class="navbar-brand" href="/">
+      <img src="../static/logo.png" height="40" class="d-inline-block align-top" alt="MATHE Logo">
+      <span class="align-bottom">MATHE Text Analysis Platform</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item {% if request.endpoint == 'home' %}active{% endif %}">
+          <a class="nav-link" href="/"><i class="fas fa-home"></i> Home</a>
+        </li>
+        <li class="nav-item {% if request.endpoint == 'analyze' %}active{% endif %}">
+          <a class="nav-link" href="/analyze"><i class="fas fa-chart-bar"></i> Analyze</a>
+        </li>
+        <li class="nav-item {% if request.endpoint == 'contribute' %}active{% endif %}">
+          <a class="nav-link" href="/contribute"><i class="fas fa-hands-helping"></i> Contribute</a>
+        </li>
+        <li class="nav-item {% if request.endpoint == 'about' %}active{% endif %}">
+          <a class="nav-link" href="/about"><i class="fas fa-info-circle"></i> About</a>
+        </li>
+        <li class="nav-item {% if request.endpoint == 'contact' %}active{% endif %}">
+          <a class="nav-link" href="/contact"><i class="fas fa-envelope"></i> Contact</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Main Content -->
+  {% block content %}{% endblock %}
+
+  <!-- Base Scripts -->
+  <script>
+    // Auto-hide flash messages after 5 seconds
+    $(document).ready(function () {
+      setTimeout(function () {
+        $('.alert').alert('close');
+      }, 5000);
+    });
+  </script>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html> 
