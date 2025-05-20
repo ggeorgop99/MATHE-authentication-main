@@ -4,62 +4,347 @@
 
 {% block extra_styles %}
 <style>
-  .upload-section {
+  .analyze-section {
+    padding: 60px 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: calc(100vh - 200px);
+  }
+
+  .analyze-card {
     background: white;
-    border-radius: 8px;
+    border-radius: 16px;
+    padding: 40px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+  }
+
+  .analyze-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .analyze-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .analyze-header h1 {
+    color: var(--primary-color);
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+  }
+
+  .analyze-header p {
+    color: #6c757d;
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .upload-section {
+    background: #fff;
+    border-radius: 12px;
     padding: 30px;
+    border: 2px dashed #dee2e6;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .upload-section:hover {
+    border-color: var(--primary-color);
+    background: #f8f9fa;
+  }
+
+  .upload-icon {
+    font-size: 3rem;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+  }
+
+  .upload-text {
+    color: #495057;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+  }
+
+  .file-input {
+    display: none;
+  }
+
+  .file-name {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: #6c757d;
+  }
+
+  .options-section {
     margin-top: 30px;
+  }
+
+  .option-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+  }
+
+  .option-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  }
+
+  .option-card h3 {
+    color: var(--primary-color);
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    font-weight: 600;
+  }
+
+  .option-card p {
+    color: #6c757d;
+    margin-bottom: 20px;
+  }
+
+  .form-check {
+    margin-bottom: 15px;
+  }
+
+  .form-check-input {
+    width: 1.2em;
+    height: 1.2em;
+    margin-top: 0.2em;
+  }
+
+  .form-check-label {
+    font-size: 1.1rem;
+    color: #495057;
+    padding-left: 10px;
+  }
+
+  .btn-analyze {
+    padding: 15px 40px;
+    font-size: 1.1rem;
+    border-radius: 30px;
+    background: var(--primary-color);
+    border: none;
+    color: white;
+    font-weight: 500;
+    transition: all 0.3s ease;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-analyze:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    background: var(--primary-color-dark);
+  }
+
+  .features-section {
+    margin-top: 60px;
+  }
+
+  .feature-card {
+    text-align: center;
+    padding: 30px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .feature-icon {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+  }
+
+  .feature-card h3 {
+    color: #2c3e50;
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    font-weight: 600;
+  }
+
+  .feature-card p {
+    color: #6c757d;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .alert {
+    border-radius: 12px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .alert-success {
+    background-color: #d4edda;
+    color: #155724;
+  }
+
+  .alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+
+  @media (max-width: 768px) {
+    .analyze-section {
+      padding: 40px 0;
+    }
+
+    .analyze-card {
+      padding: 25px;
+    }
+
+    .analyze-header h1 {
+      font-size: 2rem;
+    }
+
+    .btn-analyze {
+      width: 100%;
+      padding: 12px 20px;
+    }
   }
 </style>
 {% endblock %}
 
 {% block content %}
-  <!-- Upload Section -->
+<div class="analyze-section">
   <div class="container">
-    <div class="upload-section">
-      <h2 class="mb-4">Analyze Your Text</h2>
-      <form id="forma" method="POST" enctype="multipart/form-data">
-        <div class="form-row pt-3">
-          <div class="form-group">
+    <div class="analyze-header">
+      <h1>Text Analysis</h1>
+      <p>Upload your CSV file to perform advanced text analysis, including topic modeling and word cloud generation.</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="analyze-card">
+      <form method="POST" enctype="multipart/form-data">
+        <div class="upload-section" id="dropZone">
+          <div class="text-center">
+            <div class="upload-icon">
+              <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <div class="upload-text">
+              <p>Drag and drop your CSV file here or click to browse</p>
+              <input type="file" name="audiofile" id="fileInput" class="file-input" accept=".csv">
+              <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                Choose File
+              </button>
+            </div>
+            <div class="file-name" id="fileName"></div>
+          </div>
+        </div>
+
+        <div class="options-section">
+          <div class="option-card">
+            <h3>File Type</h3>
+            <p>Select the type of file you want to analyze:</p>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="audiofileradio" id="audiofileradio" value="csv" onclick="enableaudio(this)" checked>
-              <label for="audiofile">Upload CSV file to investigate</label>
-              <input name="audiofile" type="file" accept=".csv" class="form-control-file" id="audiofile">
+              <input class="form-check-input" type="radio" name="audiofileradio" id="csvOption" value="csv" checked>
+              <label class="form-check-label" for="csvOption">
+                CSV File
+              </label>
             </div>
           </div>
         </div>
-        <div class="form-row pt-3">
-          <input class="btn btn-primary" name="action" value="Analyze" type="submit" onclick="loader(this)">
+
+        <div class="text-center mt-4">
+          <button type="submit" name="action" value="Analyze" class="btn btn-analyze">
+            <i class="fas fa-chart-bar mr-2"></i> Analyze Text
+          </button>
         </div>
       </form>
-      <div id="spinner" class="loader" style="visibility: hidden;"></div>
+    </div>
+
+    <div class="features-section">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-cloud"></i>
+            </div>
+            <h3>Word Cloud Generation</h3>
+            <p>Generate beautiful word clouds from your text data, highlighting the most frequent terms and patterns.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-project-diagram"></i>
+            </div>
+            <h3>Topic Modeling</h3>
+            <p>Discover hidden topics and themes in your text using advanced natural language processing techniques.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <h3>Data Analysis</h3>
+            <p>Get detailed insights about your text data, including statistics and visualizations.</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-{% endblock %}
+</div>
 
-{% block extra_scripts %}
 <script>
-  function enableaudio(source) {
-    document.getElementById("audiofile").disabled = false;
-    document.getElementById("videofile").disabled = true;
-    document.getElementById("url").disabled = true;
-  }
+document.addEventListener('DOMContentLoaded', function() {
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const fileName = document.getElementById('fileName');
 
-  function enablevideo(source) {
-    document.getElementById("audiofile").disabled = true;
-    document.getElementById("videofile").disabled = false;
-    document.getElementById("url").disabled = true;
-  }
+  // Handle file selection
+  fileInput.addEventListener('change', function(e) {
+    if (this.files && this.files[0]) {
+      fileName.textContent = this.files[0].name;
+    }
+  });
 
-  function enableurl(source) {
-    document.getElementById("audiofile").disabled = true;
-    document.getElementById("videofile").disabled = true;
-    document.getElementById("url").disabled = false;
-  }
+  // Handle drag and drop
+  dropZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.style.borderColor = var(--primary-color);
+    this.style.background = '#f8f9fa';
+  });
 
-  function loader(source) {
-    document.getElementById("spinner").style.visibility = "visible";
-  }
+  dropZone.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '#dee2e6';
+    this.style.background = '#fff';
+  });
+
+  dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '#dee2e6';
+    this.style.background = '#fff';
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      fileInput.files = e.dataTransfer.files;
+      fileName.textContent = e.dataTransfer.files[0].name;
+    }
+  });
+});
 </script>
 {% endblock %} 

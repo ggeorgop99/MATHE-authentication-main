@@ -5,15 +5,39 @@
 {% block extra_styles %}
 <style>
   .results-section {
-    padding: 40px 0;
+    padding: 60px 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: calc(100vh - 200px);
   }
 
   .results-card {
     background: white;
-    border-radius: 12px;
-    padding: 30px;
+    border-radius: 16px;
+    padding: 40px;
     margin-bottom: 30px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+  }
+
+  .results-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .results-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .results-header h2 {
+    color: var(--primary-color);
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+  }
+
+  .results-header p {
+    color: #6c757d;
+    font-size: 1.1rem;
   }
 
   .preview-section {
@@ -24,6 +48,12 @@
     color: var(--primary-color);
     margin-bottom: 20px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+  }
+
+  .preview-section h3 i {
+    margin-right: 10px;
   }
 
   .preview-table {
@@ -81,88 +111,129 @@
   }
 
   .column-info {
-    margin-bottom: 30px;
+    margin-bottom: 40px;
   }
 
   .column-info h3 {
     color: var(--primary-color);
     margin-bottom: 20px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+  }
+
+  .column-info h3 i {
+    margin-right: 10px;
   }
 
   .column-card {
     background: #fff;
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 25px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s ease;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+    height: 100%;
   }
 
   .column-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-5px);
   }
 
   .column-card h5 {
     color: var(--primary-color);
     margin-bottom: 15px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+  }
+
+  .column-card h5 i {
+    margin-right: 10px;
   }
 
   .column-card p {
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     color: #4a5568;
+    display: flex;
+    align-items: center;
   }
 
   .column-card strong {
     color: #2d3748;
+    margin-right: 5px;
   }
 
   .wordcloud-section {
     margin: 40px 0;
     text-align: center;
-    padding: 30px;
+    padding: 40px;
     background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
   }
 
   .wordcloud-section h3 {
     color: var(--primary-color);
     margin-bottom: 25px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .wordcloud-section h3 i {
+    margin-right: 10px;
   }
 
   .wordcloud-section img {
     max-width: 100%;
     height: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+
+  .wordcloud-section img:hover {
+    transform: scale(1.02);
   }
 
   .topic-modelling-form {
     background: white;
-    border-radius: 12px;
-    padding: 30px;
-    margin-top: 30px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    padding: 40px;
+    margin-top: 40px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
   }
 
   .topic-modelling-form h2 {
     color: var(--primary-color);
-    margin-bottom: 25px;
+    margin-bottom: 30px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+  }
+
+  .topic-modelling-form h2 i {
+    margin-right: 10px;
   }
 
   .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+  }
+
+  .form-group label {
+    color: #2d3748;
+    font-weight: 500;
+    margin-bottom: 8px;
   }
 
   .form-control {
     border-radius: 8px;
     padding: 12px;
     border: 1px solid #e2e8f0;
-    transition: border-color 0.2s ease;
+    transition: all 0.3s ease;
+    font-size: 1rem;
   }
 
   .form-control:focus {
@@ -171,31 +242,102 @@
   }
 
   .btn-primary {
-    padding: 12px 30px;
+    padding: 15px 40px;
     border-radius: 30px;
     font-weight: 500;
-    transition: transform 0.2s ease;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-primary i {
+    margin-right: 8px;
   }
 
   .btn-primary:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   }
 
   .topic-modelling-results {
-    margin-top: 30px;
-    padding: 20px;
+    margin-top: 40px;
+    padding: 30px;
     background: #f8f9fa;
-    border-radius: 8px;
+    border-radius: 12px;
     border-left: 4px solid var(--primary-color);
   }
 
   .topic-modelling-results h3 {
     color: var(--primary-color);
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+  }
+
+  .topic-modelling-results h3 i {
+    margin-right: 10px;
+  }
+
+  .stats-section {
+    margin-top: 40px;
+    padding: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  }
+
+  .stats-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+  }
+
+  .stats-section h3 i {
+    margin-right: 10px;
+  }
+
+  .stat-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .stat-card h4 {
+    color: #2d3748;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+
+  .stat-card p {
+    color: #6c757d;
+    margin: 0;
   }
 
   @media (max-width: 768px) {
+    .results-section {
+      padding: 40px 0;
+    }
+
+    .results-card {
+      padding: 25px;
+    }
+
+    .results-header h2 {
+      font-size: 1.8rem;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px 20px;
+    }
+
     .preview-table {
       font-size: 13px;
     }
@@ -213,77 +355,105 @@
 {% endblock %}
 
 {% block content %}
-  <div class="results-section">
-    <div class="container">
-      <div class="results-card">
-        <h2 class="mb-4">Analysis Results</h2>
-        <p class="lead">File: {{ filepath }}</p>
-
-        {% if results_csv is defined %}
-          <div class="preview-section">
-            <h3>Data Preview</h3>
-            <div class="table-responsive">
-              {{ results_csv | safe }}
-            </div>
-          </div>
-        {% endif %}
-
-        {% if column_info is defined %}
-          <div class="column-info">
-            <h3>Column Information</h3>
-            <div class="row">
-              {% for column, info in column_info.items() %}
-                <div class="col-md-4">
-                  <div class="column-card">
-                    <h5>{{ column }}</h5>
-                    <p><strong>Type:</strong> {{ info.dtype }}</p>
-                    <p><strong>Non-null values:</strong> {{ info.non_null }}</p>
-                    <p><strong>Unique values:</strong> {{ info.unique }}</p>
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
-
-        <div class="wordcloud-section">
-          <h3>Word Cloud Visualization</h3>
-          <img src="../static/my_wordcloud.png" alt="Word Cloud" class="img-fluid">
-        </div>
-
-        {% if results_topic_modelling is defined %}
-          <div class="topic-modelling-results">
-            <h3>Topic Modelling Results</h3>
-            {{ results_topic_modelling | safe }}
-          </div>
-        {% endif %}
+<div class="results-section">
+  <div class="container">
+    <div class="results-card">
+      <div class="results-header">
+        <h2>Analysis Results</h2>
+        <p>File: {{ filepath }}</p>
       </div>
 
-      <div class="topic-modelling-form">
-        <h2>Topic Modelling Configuration</h2>
-        <form method="POST">
-          <div class="form-group">
-            <label for="no_topics">Number of Topics</label>
-            <input type="number" class="form-control" id="no_topics" name="no_topics" 
-                   placeholder="Enter a number" required min="1" max="20" value="5">
+      {% if results_csv is defined %}
+        <div class="preview-section">
+          <h3><i class="fas fa-table"></i> Data Preview</h3>
+          <div class="table-responsive">
+            {{ results_csv | safe }}
           </div>
+        </div>
+      {% endif %}
 
-          <div class="form-group">
-            <label for="no_words">Number of Words per Topic</label>
-            <input type="number" class="form-control" id="no_words" name="no_words" 
-                   placeholder="Enter a number" required min="1" max="10" value="10">
+      {% if column_info is defined %}
+        <div class="column-info">
+          <h3><i class="fas fa-columns"></i> Column Information</h3>
+          <div class="row">
+            {% for column, info in column_info.items() %}
+              <div class="col-md-4">
+                <div class="column-card">
+                  <h5><i class="fas fa-info-circle"></i> {{ column }}</h5>
+                  <p><strong>Type:</strong> {{ info.dtype }}</p>
+                  <p><strong>Non-null values:</strong> {{ info.non_null }}</p>
+                  <p><strong>Unique values:</strong> {{ info.unique }}</p>
+                </div>
+              </div>
+            {% endfor %}
           </div>
+        </div>
+      {% endif %}
 
-          <div class="form-group">
-            <label for="mode">Select Option:</label>
-            <select class="form-control" id="mode" name="mode">
-              <option value="tfidf">TF-IDF</option>
-            </select>
+      <div class="wordcloud-section">
+        <h3><i class="fas fa-cloud"></i> Word Cloud Visualization</h3>
+        <img src="../static/my_wordcloud.png" alt="Word Cloud" class="img-fluid">
+      </div>
+
+      {% if results_topic_modelling is defined %}
+        <div class="topic-modelling-results">
+          <h3><i class="fas fa-project-diagram"></i> Topic Modelling Results</h3>
+          {{ results_topic_modelling | safe }}
+        </div>
+      {% endif %}
+
+      <div class="stats-section">
+        <h3><i class="fas fa-chart-bar"></i> Quick Statistics</h3>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="stat-card">
+              <h4>{{ column_info.values()|map(attribute='non_null')|sum }}</h4>
+              <p>Total Records</p>
+            </div>
           </div>
-
-          <button type="submit" class="btn btn-primary">Run Topic Modelling</button>
-        </form>
+          <div class="col-md-4">
+            <div class="stat-card">
+              <h4>{{ column_info|length }}</h4>
+              <p>Number of Columns</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stat-card">
+              <h4>{{ column_info.values()|map(attribute='unique')|sum }}</h4>
+              <p>Unique Values</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+
+    <div class="topic-modelling-form">
+      <h2><i class="fas fa-cogs"></i> Topic Modelling Configuration</h2>
+      <form method="POST">
+        <div class="form-group">
+          <label for="no_topics">Number of Topics</label>
+          <input type="number" class="form-control" id="no_topics" name="no_topics" 
+                 placeholder="Enter a number" required min="1" max="20" value="5">
+        </div>
+
+        <div class="form-group">
+          <label for="no_words">Number of Words per Topic</label>
+          <input type="number" class="form-control" id="no_words" name="no_words" 
+                 placeholder="Enter a number" required min="1" max="10" value="10">
+        </div>
+
+        <div class="form-group">
+          <label for="mode">Select Option:</label>
+          <select class="form-control" id="mode" name="mode">
+            <option value="tfidf">TF-IDF</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-play"></i> Run Topic Modelling
+        </button>
+      </form>
+    </div>
   </div>
+</div>
 {% endblock %}
