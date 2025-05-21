@@ -351,6 +351,135 @@
       max-width: 200px;
     }
   }
+
+  .topic-modelling-results {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    margin-top: 40px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+  }
+
+  .topic-modelling-results h3 {
+    color: var(--primary-color);
+    margin-bottom: 30px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+  }
+
+  .topic-modelling-results h3 i {
+    margin-right: 10px;
+  }
+
+  .topics-section, .metrics-section, .distribution-section {
+    margin-bottom: 40px;
+  }
+
+  .topics-section h4, .metrics-section h4, .distribution-section h4 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+  }
+
+  .topics-section h4 i, .metrics-section h4 i, .distribution-section h4 i {
+    margin-right: 10px;
+  }
+
+  .topic-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    height: 100%;
+    transition: transform 0.3s ease;
+  }
+
+  .topic-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .topic-card h5 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-weight: 600;
+  }
+
+  .topic-words {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .topic-word {
+    background: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: #2d3748;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .metric-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    height: 100%;
+    transition: transform 0.3s ease;
+  }
+
+  .metric-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .metric-card h5 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-weight: 600;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 10px;
+  }
+
+  .metric-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  .plot-container {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  }
+
+  .plot-container img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+  }
+
+  @media (max-width: 768px) {
+    .topic-modelling-results {
+      padding: 20px;
+    }
+
+    .topic-card, .metric-card {
+      margin-bottom: 15px;
+    }
+
+    .metric-value {
+      font-size: 1.2rem;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -398,7 +527,61 @@
       {% if results_topic_modelling is defined %}
         <div class="topic-modelling-results">
           <h3><i class="fas fa-project-diagram"></i> Topic Modelling Results</h3>
-          {{ results_topic_modelling | safe }}
+          
+          <!-- Topics Section -->
+          <div class="topics-section">
+            <h4><i class="fas fa-list"></i> Identified Topics</h4>
+            <div class="row">
+              {% for topic in results_topic_modelling.topic_words %}
+                <div class="col-md-4">
+                  <div class="topic-card">
+                    <h5>Topic {{ loop.index }}</h5>
+                    <div class="topic-words">
+                      {% for word in topic %}
+                        <span class="topic-word">{{ word }}</span>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Metrics Section -->
+          <div class="metrics-section">
+            <h4><i class="fas fa-chart-line"></i> Topic Modelling Metrics</h4>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="metric-card">
+                  <h5>Coherence Score</h5>
+                  <p class="metric-value">{{ "%.4f"|format(results_topic_modelling.coherence_score) }}</p>
+                  <p class="metric-description">Measures the semantic coherence of topics</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="metric-card">
+                  <h5>Topic Diversity</h5>
+                  <p class="metric-value">{{ "%.4f"|format(results_topic_modelling.topic_diversity) }}</p>
+                  <p class="metric-description">Measures the uniqueness of words across topics</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="metric-card">
+                  <h5>Output Directory</h5>
+                  <p class="metric-value">{{ results_topic_modelling.output_dir }}</p>
+                  <p class="metric-description">Location of topic-specific CSV files</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Topic Distribution Plot -->
+          <div class="distribution-section">
+            <h4><i class="fas fa-chart-bar"></i> Topic Distribution</h4>
+            <div class="plot-container">
+              <img src="{{ results_topic_modelling.topic_distribution_plot }}" alt="Topic Distribution" class="img-fluid">
+            </div>
+          </div>
         </div>
       {% endif %}
 
@@ -430,6 +613,7 @@
     <div class="topic-modelling-form">
       <h2><i class="fas fa-cogs"></i> Topic Modelling Configuration</h2>
       <form method="POST" action="{{ url_for('topic_modelling_form') }}">
+        <input type="hidden" name="filepath" value="{{ filepath }}">
         <div class="form-group">
           <label for="no_topics">Number of Topics</label>
           <input type="number" class="form-control" id="no_topics" name="no_topics" 
