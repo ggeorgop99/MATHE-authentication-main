@@ -480,6 +480,53 @@
       font-size: 1.2rem;
     }
   }
+
+  .summary-section {
+    margin: 40px 0;
+    padding: 40px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+  }
+
+  .summary-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 25px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+  }
+
+  .summary-section h3 i {
+    margin-right: 10px;
+  }
+
+  .summary-content {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
+
+  .summary-content p {
+    color: #2d3748;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 0;
+  }
+
+  .summary-meta {
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+
+  .summary-error {
+    color: #dc3545;
+    padding: 15px;
+    background: #fff5f5;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
 </style>
 {% endblock %}
 
@@ -488,8 +535,8 @@
   <div class="container">
     <div class="results-card">
       <div class="results-header">
-        <h2>Text Analysis Results</h2>
-        <p>Analyzing file: {{ filepath }}</p>
+        <h2>Analysis Results</h2>
+        <p>Results for file: {{ filepath }}</p>
       </div>
 
       {% if results_csv is defined %}
@@ -500,6 +547,25 @@
           </div>
         </div>
       {% endif %}
+
+      <!-- Summary Section -->
+      <div class="summary-section">
+        <h3><i class="fas fa-file-alt"></i> Text Summary</h3>
+        {% if summary_result.error %}
+          <div class="summary-error">
+            <i class="fas fa-exclamation-circle"></i> {{ summary_result.error }}
+          </div>
+        {% else %}
+          <div class="summary-content">
+            <p>{{ summary_result.summary }}</p>
+          </div>
+          <div class="summary-meta">
+            <p><strong>Number of texts analyzed:</strong> {{ summary_result.num_texts }}</p>
+            <p><strong>Model used:</strong> {{ summary_result.model_used }}</p>
+            <p><strong>Summarization stages:</strong> {{ summary_result.stages }}</p>
+          </div>
+        {% endif %}
+      </div>
 
       {% if column_info is defined %}
         <div class="column-info">

@@ -7,6 +7,7 @@ import json
 import csv_handler
 import topic_modelling as tm
 import text_processing as tp
+import summarization as sum
 from werkzeug.utils import secure_filename
 
 # Set up logging
@@ -121,10 +122,14 @@ def analyze():
                 # Generate word cloud
                 tp.generate_wordcloud(filepath)
                 
+                # Generate summary
+                summary_result = sum.generate_summary(filepath)
+                
                 return render_template('analysis_results.html', 
                                      filepath=filename,
                                      results_csv=preview,
-                                     column_info=column_info)
+                                     column_info=column_info,
+                                     summary_result=summary_result)
             else:
                 flash('Please upload a CSV file', 'danger')
                 return redirect(request.url)
