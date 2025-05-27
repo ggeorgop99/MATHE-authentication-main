@@ -560,9 +560,16 @@
             <p>{{ summary_result.summary }}</p>
           </div>
           <div class="summary-meta">
-            <p><strong>Number of texts analyzed:</strong> {{ summary_result.num_texts }}</p>
+            {% if summary_result.cached %}
+              <p><i class="fas fa-info-circle"></i> <em>This is a cached summary from a previous analysis.</em></p>
+            {% endif %}
+            {% if summary_result.num_texts is not none %}
+              <p><strong>Number of texts analyzed:</strong> {{ summary_result.num_texts }}</p>
+            {% endif %}
             <p><strong>Model used:</strong> {{ summary_result.model_used }}</p>
-            <p><strong>Summarization stages:</strong> {{ summary_result.stages }}</p>
+            {% if summary_result.stages is not none %}
+              <p><strong>Summarization stages:</strong> {{ summary_result.stages }}</p>
+            {% endif %}
           </div>
         {% endif %}
       </div>

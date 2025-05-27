@@ -43,6 +43,53 @@ def generate_summary(csv_path, text_column="text", model_name="IMISLab/GreekT5-m
     Returns a dictionary containing the summary and any error messages.
     """
     try:
+        # Check for existing summary file
+        base_input_name = os.path.basename(csv_path)
+        file_name_root, _ = os.path.splitext(base_input_name)
+        summary_dir = "summaries"
+        os.makedirs(summary_dir, exist_ok=True)
+        
+        # Look for any existing summary file for this CSV
+        existing_summaries = [f for f in os.listdir(summary_dir) if f.startswith(f"{file_name_root}_summary_")]
+        
+        if existing_summaries:
+            # Get the most recent summary file
+            latest_summary = max(existing_summaries, key=lambda x: os.path.getctime(os.path.join(summary_dir, x)))
+            summary_path = os.path.join(summary_dir, latest_summary)
+            
+            try:
+                with open(summary_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    
+                # Extract summary text and metadata from the file content
+                sections = content.split("--- Summary Text ---")
+                metadata_section = sections[0].split("--- Summary Report ---")[1].strip()
+                summary_text = sections[1].strip()
+                
+                # Parse metadata
+                metadata = {}
+                for line in metadata_section.split('\n'):
+                    if ':' in line:
+                        key, value = line.split(':', 1)
+                        metadata[key.strip()] = value.strip()
+                
+                # Extract all required fields
+                model_used = metadata.get("Summarization Model", model_name)
+                num_texts = int(metadata.get("Number of Texts", 0))
+                stages = int(metadata.get("Summarization Stages", 1))
+                
+                return {
+                    "summary": summary_text,
+                    "num_texts": num_texts,
+                    "model_used": model_used,
+                    "stages": stages,
+                    "cached": True
+                }
+            except Exception as e:
+                logger.error(f"Error reading cached summary: {str(e)}")
+                # If there's an error reading the cache, continue with normal processing
+        
+        # If no cache exists or there was an error reading it, proceed with normal processing
         # Load and preprocess data
         df = load_and_preprocess_greek(csv_path, text_column)
         if df is None or df.empty:
@@ -129,54 +176,73 @@ def generate_summary(csv_path, text_column="text", model_name="IMISLab/GreekT5-m
             ]
 
             if not chunks_S2:
-                return {
+                result = {
                     "summary": intermediate_summary,
                     "num_texts": len(df),
                     "model_used": model_name,
                     "stages": 1
-                }
-
-            summaries_S2 = []
-            num_batches_S2 = math.ceil(len(chunks_S2) / batch_size)
-
-            for i in range(num_batches_S2):
-                batch_chunks_S2 = chunks_S2[i * batch_size : (i + 1) * batch_size]
-                try:
-                    chunk_summaries_S2 = summarizer(
-                        batch_chunks_S2,
-                        max_length=150,
-                        min_length=30,
-                        do_sample=False,
-                        truncation=True
-                    )
-                    summaries_S2.extend([s["summary_text"] for s in chunk_summaries_S2])
-                except Exception as batch_error_s2:
-                    logger.error(f"Error processing Stage 2 batch {i+1}: {batch_error_s2}. Skipping this batch.")
-                    summaries_S2.extend(["[S2 Error]" for _ in batch_chunks_S2])
-
-            final_summary = " ".join(s for s in summaries_S2 if s != "[S2 Error]").strip()
-            
-            if final_summary:
-                return {
-                    "summary": final_summary,
-                    "num_texts": len(df),
-                    "model_used": model_name,
-                    "stages": 2
                 }
             else:
-                return {
-                    "summary": intermediate_summary,
+                summaries_S2 = []
+                num_batches_S2 = math.ceil(len(chunks_S2) / batch_size)
+
+                for i in range(num_batches_S2):
+                    batch_chunks_S2 = chunks_S2[i * batch_size : (i + 1) * batch_size]
+                    try:
+                        chunk_summaries_S2 = summarizer(
+                            batch_chunks_S2,
+                            max_length=150,
+                            min_length=30,
+                            do_sample=False,
+                            truncation=True
+                        )
+                        summaries_S2.extend([s["summary_text"] for s in chunk_summaries_S2])
+                    except Exception as batch_error_s2:
+                        logger.error(f"Error processing Stage 2 batch {i+1}: {batch_error_s2}. Skipping this batch.")
+                        summaries_S2.extend(["[S2 Error]" for _ in batch_chunks_S2])
+
+                final_summary = " ".join(s for s in summaries_S2 if s != "[S2 Error]").strip()
+                
+                result = {
+                    "summary": final_summary if final_summary else intermediate_summary,
                     "num_texts": len(df),
                     "model_used": model_name,
-                    "stages": 1
+                    "stages": 2 if final_summary else 1
                 }
         else:
-            return {
+            result = {
                 "summary": intermediate_summary,
                 "num_texts": len(df),
                 "model_used": model_name,
                 "stages": 1
             }
+
+        # Save the summary to file
+        try:
+            now = datetime.now()
+            timestamp_str = now.strftime("%Y%m%d_%H%M%S")
+            output_filename = f"{file_name_root}_summary_{timestamp_str}.txt"
+            output_filepath = os.path.join(summary_dir, output_filename)
+            
+            file_content = f"""--- Summary Report ---
+                            Generation Date: {now.strftime("%Y-%m-%d %H:%M:%S")}
+                            Input Data File: {csv_path}
+                            Summarization Model: {model_name}
+                            Number of Texts: {result["num_texts"]}
+                            Summarization Stages: {result["stages"]}
+
+                            --- Summary Text ---
+                            {result["summary"]}"""
+            
+            with open(output_filepath, "w", encoding="utf-8") as f:
+                f.write(file_content)
+                
+            logger.info(f"Summary saved to: {output_filepath}")
+        except Exception as e:
+            logger.error(f"Error saving summary to file: {str(e)}")
+            # Continue even if saving fails
+        
+        return result
 
     except Exception as e:
         logger.error(f"Error generating summary: {str(e)}")
