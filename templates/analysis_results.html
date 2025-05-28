@@ -689,13 +689,13 @@
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab">
-            <i class="fas fa-file-alt tab-icon"></i>Summary
+          <button class="nav-link" id="wordcloud-tab" data-bs-toggle="tab" data-bs-target="#wordcloud" type="button" role="tab">
+            <i class="fas fa-cloud tab-icon"></i>Word Cloud
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="wordcloud-tab" data-bs-toggle="tab" data-bs-target="#wordcloud" type="button" role="tab">
-            <i class="fas fa-cloud tab-icon"></i>Word Cloud
+          <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab">
+            <i class="fas fa-file-alt tab-icon"></i>Summary
           </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -741,33 +741,6 @@
           {% endif %}
         </div>
 
-        <!-- Summary Tab -->
-        <div class="tab-pane fade" id="summary" role="tabpanel">
-          <div class="summary-section">
-            {% if summary_result.error %}
-              <div class="summary-error">
-                <i class="fas fa-exclamation-circle"></i> {{ summary_result.error }}
-              </div>
-            {% else %}
-              <div class="summary-content">
-                <p>{{ summary_result.summary }}</p>
-              </div>
-              <div class="summary-meta">
-                {% if summary_result.cached %}
-                  <p><i class="fas fa-info-circle"></i> <em>This is a cached summary from a previous analysis.</em></p>
-                {% endif %}
-                {% if summary_result.num_texts is not none %}
-                  <p><strong>Number of texts analyzed:</strong> {{ summary_result.num_texts }}</p>
-                {% endif %}
-                <p><strong>Model used:</strong> {{ summary_result.model_used }}</p>
-                {% if summary_result.stages is not none %}
-                  <p><strong>Summarization stages:</strong> {{ summary_result.stages }}</p>
-                {% endif %}
-              </div>
-            {% endif %}
-          </div>
-        </div>
-
         <!-- Word Cloud Tab -->
         <div class="tab-pane fade" id="wordcloud" role="tabpanel">
           <div class="wordcloud-section">
@@ -796,6 +769,33 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Summary Tab -->
+        <div class="tab-pane fade" id="summary" role="tabpanel">
+          <div class="summary-section">
+            {% if summary_result.error %}
+              <div class="summary-error">
+                <i class="fas fa-exclamation-circle"></i> {{ summary_result.error }}
+              </div>
+            {% else %}
+              <div class="summary-content">
+                <p>{{ summary_result.summary }}</p>
+              </div>
+              <div class="summary-meta">
+                {% if summary_result.cached %}
+                  <p><i class="fas fa-info-circle"></i> <em>This is a cached summary from a previous analysis.</em></p>
+                {% endif %}
+                {% if summary_result.num_texts is not none %}
+                  <p><strong>Number of texts analyzed:</strong> {{ summary_result.num_texts }}</p>
+                {% endif %}
+                <p><strong>Model used:</strong> {{ summary_result.model_used }}</p>
+                {% if summary_result.stages is not none %}
+                  <p><strong>Summarization stages:</strong> {{ summary_result.stages }}</p>
+                {% endif %}
+              </div>
+            {% endif %}
           </div>
         </div>
 
@@ -897,104 +897,102 @@
 
         <!-- Sentiment Analysis Tab -->
         <div class="tab-pane fade" id="sentiment" role="tabpanel" aria-labelledby="sentiment-tab">
-          <div class="analysis-section">
-            <h2 class="section-title text-danger">
-              <i class="fas fa-heart"></i> Sentiment Analysis
+          <div class="sentiment-analysis-form">
+            <h2 class="text-danger">
+              <i class="fas fa-heart"></i> Sentiment Analysis Configuration
             </h2>
-            <div class="sentiment-analysis-form">
-              <form method="POST" action="{{ url_for('sentiment_analysis') }}">
-                <input type="hidden" name="filepath" value="{{ filepath }}">
-                
-                <div class="form-group">
-                  <label for="model_name">Select Model</label>
-                  <select class="form-control" id="model_name" name="model_name" required>
-                    {% for model in available_models %}
-                    <option value="{{ model }}">{{ model }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label for="testing_method">Testing Method</label>
-                  <select class="form-control" id="testing_method" name="testing_method" required onchange="toggleUncertaintyThreshold()">
-                    {% for method in testing_methods %}
-                    <option value="{{ method }}">{{ method|upper }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label for="uncertainty_threshold">Uncertainty Threshold (for MC dropout)</label>
-                  <input type="number" class="form-control" id="uncertainty_threshold" name="uncertainty_threshold" 
-                         value="0.2" step="0.1" min="0" max="1" disabled>
-                  <small class="form-text text-muted">This setting is only available when using MC dropout method</small>
-                </div>
-
-                <button type="submit" class="btn btn-primary">
-                  <i class="fas fa-play"></i> Run Sentiment Analysis
-                </button>
-              </form>
-            </div>
-
-            {% if sentiment_results %}
-            <div class="sentiment-results">
-              <h3><i class="fas fa-chart-bar"></i> Sentiment Analysis Results</h3>
+            <form method="POST" action="{{ url_for('sentiment_analysis') }}">
+              <input type="hidden" name="filepath" value="{{ filepath }}">
               
-              <div class="sentiment-summary">
-                <h4>Summary</h4>
-                <div class="sentiment-stats">
-                  <div class="stat-card">
-                    <h5>Positive Texts</h5>
-                    <p>{{ sentiment_results.summary.positive_count }} ({{ "%.1f"|format(sentiment_results.summary.positive_percentage) }}%)</p>
-                  </div>
-                  <div class="stat-card">
-                    <h5>Negative Texts</h5>
-                    <p>{{ sentiment_results.summary.negative_count }} ({{ "%.1f"|format(sentiment_results.summary.negative_percentage) }}%)</p>
-                  </div>
-                  <div class="stat-card">
-                    <h5>Total Texts</h5>
-                    <p>{{ sentiment_results.summary.total_texts }}</p>
-                  </div>
-                </div>
-
-                {% if sentiment_results.uncertainty %}
-                <div class="uncertainty-stats">
-                  <h4>Uncertainty Analysis</h4>
-                  <p>Total uncertain predictions: {{ sentiment_results.uncertainty.total_uncertain }}</p>
-                  <p>Uncertain predictions ratio: {{ "%.1f"|format(sentiment_results.uncertainty.uncertain_ratio * 100) }}%</p>
-                </div>
-                {% endif %}
+              <div class="form-group">
+                <label for="model_name">Select Model</label>
+                <select class="form-control" id="model_name" name="model_name" required>
+                  {% for model in available_models %}
+                  <option value="{{ model }}">{{ model }}</option>
+                  {% endfor %}
+                </select>
               </div>
 
-              <div class="sentiment-plots">
-                <div class="plot-card">
-                  <h5>Sentiment Distribution</h5>
-                  <img src="{{ url_for('static', filename=sentiment_results.file_paths.sentiment_distribution) }}" alt="Sentiment Distribution">
-                </div>
-                <div class="plot-card">
-                  <h5>Probability Distribution</h5>
-                  <img src="{{ url_for('static', filename=sentiment_results.file_paths.probability_distribution) }}" alt="Probability Distribution">
-                </div>
-                {% if sentiment_results.file_paths.uncertainty_distribution %}
-                <div class="plot-card">
-                  <h5>Uncertainty Distribution</h5>
-                  <img src="{{ url_for('static', filename=sentiment_results.file_paths.uncertainty_distribution) }}" alt="Uncertainty Distribution">
-                </div>
-                {% endif %}
+              <div class="form-group">
+                <label for="testing_method">Testing Method</label>
+                <select class="form-control" id="testing_method" name="testing_method" required onchange="toggleUncertaintyThreshold()">
+                  {% for method in testing_methods %}
+                  <option value="{{ method }}">{{ method|upper }}</option>
+                  {% endfor %}
+                </select>
               </div>
 
-              <div class="mt-4">
-                <h4>Download Results</h4>
-                <a href="{{ url_for('download', filename=sentiment_results.file_paths.preprocessed_predictions) }}" class="btn btn-outline-primary">
-                  <i class="fas fa-download"></i> Download Preprocessed Predictions
-                </a>
-                <a href="{{ url_for('download', filename=sentiment_results.file_paths.unpreprocessed_predictions) }}" class="btn btn-outline-primary">
-                  <i class="fas fa-download"></i> Download Unpreprocessed Predictions
-                </a>
+              <div class="form-group">
+                <label for="uncertainty_threshold">Uncertainty Threshold (for MC dropout)</label>
+                <input type="number" class="form-control" id="uncertainty_threshold" name="uncertainty_threshold" 
+                       value="0.2" step="0.1" min="0" max="1" disabled>
+                <small class="form-text text-muted">This setting is only available when using MC dropout method</small>
               </div>
-            </div>
-            {% endif %}
+
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-play"></i> Run Sentiment Analysis
+              </button>
+            </form>
           </div>
+
+          {% if sentiment_results %}
+          <div class="sentiment-results">
+            <h3><i class="fas fa-chart-bar"></i> Sentiment Analysis Results</h3>
+            
+            <div class="sentiment-summary">
+              <h4>Summary</h4>
+              <div class="sentiment-stats">
+                <div class="stat-card">
+                  <h5>Positive Texts</h5>
+                  <p>{{ sentiment_results.summary.positive_count }} ({{ "%.1f"|format(sentiment_results.summary.positive_percentage) }}%)</p>
+                </div>
+                <div class="stat-card">
+                  <h5>Negative Texts</h5>
+                  <p>{{ sentiment_results.summary.negative_count }} ({{ "%.1f"|format(sentiment_results.summary.negative_percentage) }}%)</p>
+                </div>
+                <div class="stat-card">
+                  <h5>Total Texts</h5>
+                  <p>{{ sentiment_results.summary.total_texts }}</p>
+                </div>
+              </div>
+
+              {% if sentiment_results.uncertainty %}
+              <div class="uncertainty-stats">
+                <h4>Uncertainty Analysis</h4>
+                <p>Total uncertain predictions: {{ sentiment_results.uncertainty.total_uncertain }}</p>
+                <p>Uncertain predictions ratio: {{ "%.1f"|format(sentiment_results.uncertainty.uncertain_ratio * 100) }}%</p>
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="sentiment-plots">
+              <div class="plot-card">
+                <h5>Sentiment Distribution</h5>
+                <img src="{{ url_for('static', filename=sentiment_results.file_paths.sentiment_distribution) }}" alt="Sentiment Distribution">
+              </div>
+              <div class="plot-card">
+                <h5>Probability Distribution</h5>
+                <img src="{{ url_for('static', filename=sentiment_results.file_paths.probability_distribution) }}" alt="Probability Distribution">
+              </div>
+              {% if sentiment_results.file_paths.uncertainty_distribution %}
+              <div class="plot-card">
+                <h5>Uncertainty Distribution</h5>
+                <img src="{{ url_for('static', filename=sentiment_results.file_paths.uncertainty_distribution) }}" alt="Uncertainty Distribution">
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="mt-4">
+              <h4>Download Results</h4>
+              <a href="{{ url_for('download', filename=sentiment_results.file_paths.preprocessed_predictions) }}" class="btn btn-outline-primary">
+                <i class="fas fa-download"></i> Download Preprocessed Predictions
+              </a>
+              <a href="{{ url_for('download', filename=sentiment_results.file_paths.unpreprocessed_predictions) }}" class="btn btn-outline-primary">
+                <i class="fas fa-download"></i> Download Unpreprocessed Predictions
+              </a>
+            </div>
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>
