@@ -16,8 +16,20 @@ from sklearn.metrics import (
     roc_auc_score,
     classification_report,
 )
-import argparse
 import os
+
+# Available models for UI dropdown
+AVAILABLE_MODELS = [
+    "pharmSpellchecked",
+    "pharm_translated_greek_spellchecked",
+    "datasetSpellchecked_TL_On_pharmSpellchecked",
+    "datasetSpellchecked",
+    "datasetAndPharmTranslatedSpellchecked",
+    "datasetAndPharmSpellchecked"
+]
+
+# Available testing methods for UI dropdown
+TESTING_METHODS = ["classic", "mc"]
 
 def mc_dropout_predict(model, x, n_samples=100):
     """
@@ -140,30 +152,24 @@ def calculate_metrics(Y_test, Y_predictions, Y_probabilities, mode):
     print("\nSummary of Evaluation Metrics:\n", metrics_summary)
     return accuracy, logloss, roc_auc, roc_auc_float, recall, precision, f1
 
-def main():
-    parser = argparse.ArgumentParser(description="Perform sentiment analysis on unlabeled data.")
-    parser.add_argument("--file_name", type=str, required=True, help="Name of the input file")
-    parser.add_argument("--model_name", type=str, required=True, help="Name of the model to use")
-    parser.add_argument(
-        "--testing_method",
-        type=str,
-        required=False,
-        choices=["classic", "mc"],
-        default="mc",
-        help="Testing method (classic or mc dropout)"
-    )
-    parser.add_argument(
-        "--uncertainty_threshold",
-        type=float,
-        default=0.2,
-        help="Threshold for uncertainty in MC dropout predictions"
-    )
-
-    args = parser.parse_args()
-    file_name = args.file_name
-    model_name = args.model_name
-    testing_method = args.testing_method
-    uncertainty_threshold = args.uncertainty_threshold
+def perform_sentiment_analysis(file_name, model_name, testing_method="mc", uncertainty_threshold=0.2):
+    """
+    Main function to perform sentiment analysis that can be called from the UI.
+    
+    Args:
+        file_name (str): Name of the input file (without extension)
+        model_name (str): Name of the model to use (must be one of AVAILABLE_MODELS)
+        testing_method (str): Testing method - "classic" or "mc"
+        uncertainty_threshold (float): Threshold for uncertainty in MC dropout predictions
+    
+    Returns:
+        dict: Dictionary containing analysis results and paths to generated files
+    """
+    if model_name not in AVAILABLE_MODELS:
+        raise ValueError(f"Invalid model name. Must be one of: {AVAILABLE_MODELS}")
+    
+    if testing_method not in TESTING_METHODS:
+        raise ValueError(f"Invalid testing method. Must be one of: {TESTING_METHODS}")
 
     # Setup paths
     dir_path = f"savedmodel_bin/{model_name}_model"
@@ -200,9 +206,10 @@ def main():
         
         # Identify uncertain predictions
         uncertain_predictions = np.where(uncertainty > uncertainty_threshold)[0]
-        print(f"\nUncertainty Analysis:")
-        print(f"Total uncertain predictions: {len(uncertain_predictions)}")
-        print(f"Uncertain predictions ratio: {len(uncertain_predictions)/len(mean_pred):.2%}")
+        uncertainty_stats = {
+            "total_uncertain": len(uncertain_predictions),
+            "uncertain_ratio": len(uncertain_predictions)/len(mean_pred)
+        }
 
     # Prepare results
     probs = Y_probabilities.flatten()
@@ -259,15 +266,36 @@ def main():
     if testing_method == 'mc':
         plot_uncertainty_distribution(uncertainty_flat, results_dir)
 
-    # Print summary
-    print("\nSentiment Analysis Results:")
-    print(f"Positive texts: {positive_count} ({positive_percentage:.1f}%)")
-    print(f"Negative texts: {negative_count} ({negative_percentage:.1f}%)")
-    print(f"Total texts: {total_texts}")
-    print(f"\nResults saved to:")
-    print(f"- Preprocessed predictions: {output_path}")
-    print(f"- Unpreprocessed predictions: {unpreprocessed_output_path}")
+    # Prepare results dictionary
+    results = {
+        "summary": {
+            "positive_count": positive_count,
+            "negative_count": negative_count,
+            "total_texts": total_texts,
+            "positive_percentage": positive_percentage,
+            "negative_percentage": negative_percentage
+        },
+        "file_paths": {
+            "preprocessed_predictions": output_path,
+            "unpreprocessed_predictions": unpreprocessed_output_path,
+            "sentiment_distribution": f"{results_dir}/{file_name}_sentiment_distribution.png",
+            "probability_distribution": f"{results_dir}/predicted_probabilities.png",
+            "predictions_distribution": f"{results_dir}/predicted_predictions.png"
+        }
+    }
 
+    if testing_method == 'mc':
+        results["uncertainty"] = uncertainty_stats
+        results["file_paths"]["uncertainty_distribution"] = f"{results_dir}/uncertainty_distribution.png"
+
+    return results
 
 if __name__ == "__main__":
-    main()
+    # Example usage
+    results = perform_sentiment_analysis(
+        file_name="example",
+        model_name="pharmSpellchecked",
+        testing_method="mc",
+        uncertainty_threshold=0.2
+    )
+    print("\nAnalysis Results:", results)

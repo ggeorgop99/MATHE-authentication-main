@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, send_from_directory, redirect, flash, url_for, jsonify
+from flask import Flask, request, render_template, send_from_directory, redirect, flash, url_for, jsonify, session
 from datetime import datetime
 import random
 import os
@@ -8,7 +8,10 @@ import csv_handler
 import topic_modelling as tm
 import text_processing as tp
 import summarization as sum
+import sentiment_prediction as sp
 from werkzeug.utils import secure_filename
+import numpy as np
+import pandas as pd
 
 # Set up logging
 logging.basicConfig(
@@ -26,6 +29,24 @@ app.config['UPLOAD_FOLDER'] = 'files/temp'
 # Create required directories
 for directory in ['data/datasets', 'data/annotations', 'files/temp', 'static']:
     os.makedirs(directory, exist_ok=True)
+
+def convert_to_serializable(obj):
+    """Convert NumPy and pandas types to Python native types"""
+    if isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, pd.DataFrame):
+        return obj.to_dict(orient='records')
+    elif isinstance(obj, pd.Series):
+        return obj.to_dict()
+    elif isinstance(obj, dict):
+        return {key: convert_to_serializable(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_to_serializable(item) for item in obj]
+    return obj
 
 def load_unannotated_texts():
     """Load texts that need annotation from a file"""
@@ -88,6 +109,31 @@ def save_annotated_text(text_id, sentiment, comments):
         logger.error(f"Error saving annotation: {str(e)}")
         return False
 
+def get_or_create_analysis_results(filepath):
+    """Get analysis results from session or create new ones"""
+    if 'analysis_results' not in session:
+        session['analysis_results'] = {}
+    
+    if filepath not in session['analysis_results']:
+        session['analysis_results'][filepath] = {
+            'preview': None,
+            'column_info': None,
+            'summary_result': None,
+            'topic_modelling_results': None,
+            'sentiment_results': None,
+            'wordcloud_generated': False
+        }
+    
+    return session['analysis_results'][filepath]
+
+def store_analysis_results(filepath, results):
+    """Store analysis results in session with proper type conversion"""
+    analysis_results = get_or_create_analysis_results(filepath)
+    for key, value in results.items():
+        analysis_results[key] = convert_to_serializable(value)
+    session['analysis_results'][filepath] = analysis_results
+    session.modified = True
+
 @app.route('/')
 def home():
     """Home page with feature cards"""
@@ -115,21 +161,38 @@ def analyze():
                 filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(filepath)
                 
-                # Generate preview and column info
-                preview = csv_handler.get_preview(filepath)
-                column_info = csv_handler.get_column_info(filepath)
+                # Initialize or get analysis results
+                analysis_results = get_or_create_analysis_results(filename)
                 
-                # Generate word cloud
-                tp.generate_wordcloud(filepath)
+                # Generate preview and column info if not already in session
+                if not analysis_results['preview'] or not analysis_results['column_info']:
+                    preview = csv_handler.get_preview(filepath)
+                    column_info = csv_handler.get_column_info(filepath)
+                    store_analysis_results(filename, {
+                        'preview': preview,
+                        'column_info': column_info
+                    })
                 
-                # Generate summary
-                summary_result = sum.generate_summary(filepath)
+                # Generate word cloud if not already generated
+                if not analysis_results['wordcloud_generated']:
+                    tp.generate_wordcloud(filepath)
+                    store_analysis_results(filename, {'wordcloud_generated': True})
+                
+                # Generate summary if not already in session
+                if not analysis_results['summary_result']:
+                    summary_result = sum.generate_summary(filepath)
+                    store_analysis_results(filename, {'summary_result': summary_result})
+                
+                # Get the latest results from session
+                analysis_results = get_or_create_analysis_results(filename)
                 
                 return render_template('analysis_results.html', 
                                      filepath=filename,
-                                     results_csv=preview,
-                                     column_info=column_info,
-                                     summary_result=summary_result)
+                                     results_csv=analysis_results['preview'],
+                                     column_info=analysis_results['column_info'],
+                                     summary_result=analysis_results['summary_result'],
+                                     available_models=sp.AVAILABLE_MODELS,
+                                     testing_methods=sp.TESTING_METHODS)
             else:
                 flash('Please upload a CSV file', 'danger')
                 return redirect(request.url)
@@ -138,6 +201,51 @@ def analyze():
             return redirect(request.url)
     
     return render_template('analyze.html')
+
+@app.route('/sentiment_analysis', methods=['POST'])
+def sentiment_analysis():
+    """Handle sentiment analysis request"""
+    try:
+        # Get parameters from form
+        filepath = request.form.get('filepath')
+        model_name = request.form.get('model_name')
+        testing_method = request.form.get('testing_method')
+        uncertainty_threshold = float(request.form.get('uncertainty_threshold', 0.2))
+        
+        if not all([filepath, model_name, testing_method]):
+            flash('Missing required parameters', 'danger')
+            return redirect(url_for('analyze'))
+        
+        # Get existing analysis results
+        analysis_results = get_or_create_analysis_results(filepath)
+        
+        # Run sentiment analysis
+        results = sp.perform_sentiment_analysis(
+            file_name=os.path.splitext(filepath)[0],
+            model_name=model_name,
+            testing_method=testing_method,
+            uncertainty_threshold=uncertainty_threshold
+        )
+        
+        # Store results in session
+        store_analysis_results(filepath, {'sentiment_results': results})
+        
+        # Get the latest results from session
+        analysis_results = get_or_create_analysis_results(filepath)
+        
+        return render_template('analysis_results.html',
+                             filepath=filepath,
+                             results_csv=analysis_results['preview'],
+                             column_info=analysis_results['column_info'],
+                             summary_result=analysis_results['summary_result'],
+                             sentiment_results=results,
+                             available_models=sp.AVAILABLE_MODELS,
+                             testing_methods=sp.TESTING_METHODS)
+                             
+    except Exception as e:
+        logger.error(f"Error in sentiment analysis: {str(e)}")
+        flash(f'Error performing sentiment analysis: {str(e)}', 'danger')
+        return redirect(url_for('analyze'))
 
 @app.route('/topic_modelling', methods=['POST'])
 def topic_modelling_form():
@@ -154,18 +262,26 @@ def topic_modelling_form():
     
     full_filepath = os.path.join(app.config['UPLOAD_FOLDER'], filepath)
     
+    # Get existing analysis results
+    analysis_results = get_or_create_analysis_results(filepath)
+    
     # Run topic modeling
     results = tm.topic_modelling_function(full_filepath, no_topics, no_words, mode)
     
-    # Get preview and column info again
-    preview = csv_handler.get_preview(full_filepath)
-    column_info = csv_handler.get_column_info(full_filepath)
+    # Store results in session
+    store_analysis_results(filepath, {'topic_modelling_results': results})
+    
+    # Get the latest results from session
+    analysis_results = get_or_create_analysis_results(filepath)
     
     return render_template('analysis_results.html',
                          filepath=filepath,
-                         results_csv=preview,
-                         column_info=column_info,
-                         results_topic_modelling=results)
+                         results_csv=analysis_results['preview'],
+                         column_info=analysis_results['column_info'],
+                         results_topic_modelling=results,
+                         summary_result=analysis_results['summary_result'],
+                         available_models=sp.AVAILABLE_MODELS,
+                         testing_methods=sp.TESTING_METHODS)
 
 @app.route('/contribute')
 def contribute():
