@@ -302,10 +302,38 @@ def sentiment_analysis():
 
 @app.route('/topic_modelling', methods=['POST'])
 def topic_modelling_form():
-    # Get parameters from form
+    # Get basic parameters from form
     no_topics = int(request.form.get('no_topics', 5))
     no_words = int(request.form.get('no_words', 10))
     mode = request.form.get('mode', 'tfidf')
+    
+    # Get advanced parameters from form
+    max_df = float(request.form.get('max_df', 0.95))
+    min_df = int(request.form.get('min_df', 2))
+    max_features = int(request.form.get('max_features', 1000))
+    l1_ratio = float(request.form.get('l1_ratio', 0.5))
+    max_iter = int(request.form.get('max_iter', 300))
+    init = request.form.get('init', 'nndsvd')
+    
+    # Validate parameters
+    if not (0 <= max_df <= 1):
+        flash('Maximum document frequency must be between 0 and 1', 'danger')
+        return redirect(url_for('analyze'))
+    if min_df < 1:
+        flash('Minimum document frequency must be at least 1', 'danger')
+        return redirect(url_for('analyze'))
+    if max_features < 100:
+        flash('Maximum features must be at least 100', 'danger')
+        return redirect(url_for('analyze'))
+    if not (0 <= l1_ratio <= 1):
+        flash('L1/L2 ratio must be between 0 and 1', 'danger')
+        return redirect(url_for('analyze'))
+    if max_iter < 100:
+        flash('Maximum iterations must be at least 100', 'danger')
+        return redirect(url_for('analyze'))
+    if init not in ['nndsvd', 'random']:
+        flash('Invalid initialization method', 'danger')
+        return redirect(url_for('analyze'))
     
     # Get the filepath from the session or request
     filepath = request.form.get('filepath')
@@ -318,11 +346,28 @@ def topic_modelling_form():
     # Get existing analysis results
     analysis_results = get_or_create_analysis_results(filepath)
     
-    # Run topic modeling
-    results = tm.topic_modelling_function(full_filepath, no_topics, no_words, mode)
+    # Store current sentiment results before running topic modelling
+    current_sentiment_results = analysis_results.get('sentiment_results')
     
-    # Store results in session
-    store_analysis_results(filepath, {'topic_modelling_results': results})
+    # Run topic modeling with all parameters
+    results = tm.topic_modelling_function(
+        full_filepath, 
+        no_topics, 
+        no_words, 
+        mode,
+        max_df=max_df,
+        min_df=min_df,
+        max_features=max_features,
+        l1_ratio=l1_ratio,
+        max_iter=max_iter,
+        init=init
+    )
+    
+    # Store results in session, preserving sentiment results
+    store_analysis_results(filepath, {
+        'topic_modelling_results': results,
+        'sentiment_results': current_sentiment_results
+    })
     
     # Get the latest results from session
     analysis_results = get_or_create_analysis_results(filepath)

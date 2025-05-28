@@ -15,7 +15,24 @@ import sys
 
 logger = logging.getLogger(__name__)
 
-def topic_modelling_function(csv_filepath, no_topics, no_top_words, mode):
+def topic_modelling_function(csv_filepath, no_topics, no_top_words, mode, 
+                           max_df=0.95, min_df=2, max_features=1000,
+                           l1_ratio=0.5, max_iter=300, init='nndsvd'):
+    """
+    Perform topic modelling on the given CSV file.
+    
+    Args:
+        csv_filepath (str): Path to the CSV file
+        no_topics (int): Number of topics to extract
+        no_top_words (int): Number of top words per topic
+        mode (str): Modelling method (currently only 'tfidf' is supported)
+        max_df (float): Maximum document frequency (0.0 to 1.0)
+        min_df (int): Minimum document frequency
+        max_features (int): Maximum number of features
+        l1_ratio (float): Mixing parameter for L1/L2 regularization (0.0 to 1.0)
+        max_iter (int): Maximum number of iterations
+        init (str): Initialization method ('nndsvd' or 'random')
+    """
     try:
         # Read data
         tweets = pd.read_csv(csv_filepath)
@@ -52,14 +69,24 @@ def topic_modelling_function(csv_filepath, no_topics, no_top_words, mode):
             print("\n" + "="*80 + "\n")
             raise OSError("Greek language model not installed. Please follow the instructions above to install it.")
 
-        # TF-IDF Vectorization
-        vectorizer = TfidfVectorizer(max_df=0.95, min_df=2, max_features=1000, stop_words=list(stop_words))
+        # TF-IDF Vectorization with configurable parameters
+        vectorizer = TfidfVectorizer(
+            max_df=max_df,
+            min_df=min_df,
+            max_features=max_features,
+            stop_words=list(stop_words)
+        )
         tfidf = vectorizer.fit_transform(corpus)
         feature_names = vectorizer.get_feature_names_out()
 
-        # Topic Modeling with NMF
-        model = NMF(n_components=min(no_topics, int(len(corpus) / 2)), random_state=1, l1_ratio=0.5, max_iter=300,
-                    init='nndsvd').fit(tfidf)
+        # Topic Modeling with NMF and configurable parameters
+        model = NMF(
+            n_components=min(no_topics, int(len(corpus) / 2)),
+            random_state=1,
+            l1_ratio=l1_ratio,
+            max_iter=max_iter,
+            init=init
+        ).fit(tfidf)
 
         # Print topics
         topic_words = []
@@ -124,7 +151,15 @@ def topic_modelling_function(csv_filepath, no_topics, no_top_words, mode):
             "coherence_score": coherence_score,
             "topic_diversity": topic_diversity,
             "output_dir": output_dir,
-            "topic_distribution_plot": "static/topic_distribution.png"
+            "topic_distribution_plot": "static/topic_distribution.png",
+            "parameters": {
+                "max_df": max_df,
+                "min_df": min_df,
+                "max_features": max_features,
+                "l1_ratio": l1_ratio,
+                "max_iter": max_iter,
+                "init": init
+            }
         }
     except Exception as e:
         logger.error(f"Error in topic modelling: {str(e)}")
