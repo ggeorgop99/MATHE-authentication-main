@@ -604,8 +604,8 @@
 
   .sentiment-plots {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 30px;
     margin-top: 30px;
   }
 
@@ -613,13 +613,21 @@
     background: white;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .plot-card h5 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    font-weight: 600;
   }
 
   .plot-card img {
     width: 100%;
     height: auto;
     border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   }
 
   /* Add styles for tabs */
@@ -684,27 +692,27 @@
       <!-- Navigation Tabs -->
       <ul class="nav nav-tabs" id="analysisTabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview" type="button" role="tab">
+          <button class="nav-link {% if active_tab == 'preview' %}active{% endif %}" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview" type="button" role="tab">
             <i class="fas fa-table tab-icon"></i>Data Preview
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="wordcloud-tab" data-bs-toggle="tab" data-bs-target="#wordcloud" type="button" role="tab">
+          <button class="nav-link {% if active_tab == 'wordcloud' %}active{% endif %}" id="wordcloud-tab" data-bs-toggle="tab" data-bs-target="#wordcloud" type="button" role="tab">
             <i class="fas fa-cloud tab-icon"></i>Word Cloud
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab">
+          <button class="nav-link {% if active_tab == 'summary' %}active{% endif %}" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab">
             <i class="fas fa-file-alt tab-icon"></i>Summary
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="topic-tab" data-bs-toggle="tab" data-bs-target="#topic" type="button" role="tab">
+          <button class="nav-link {% if active_tab == 'topic' %}active{% endif %}" id="topic-tab" data-bs-toggle="tab" data-bs-target="#topic" type="button" role="tab">
             <i class="fas fa-project-diagram tab-icon"></i>Topic Modelling
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="sentiment-tab" data-bs-toggle="tab" data-bs-target="#sentiment" type="button" role="tab">
+          <button class="nav-link {% if active_tab == 'sentiment' %}active{% endif %}" id="sentiment-tab" data-bs-toggle="tab" data-bs-target="#sentiment" type="button" role="tab">
             <i class="fas fa-heart tab-icon"></i>Sentiment Analysis
           </button>
         </li>
@@ -713,11 +721,21 @@
       <!-- Tab Content -->
       <div class="tab-content" id="analysisTabsContent">
         <!-- Preview Tab -->
-        <div class="tab-pane fade show active" id="preview" role="tabpanel">
+        <div class="tab-pane fade {% if active_tab == 'preview' %}show active{% endif %}" id="preview" role="tabpanel">
           {% if results_csv is defined %}
             <div class="preview-section">
+              <h3><i class="fas fa-table"></i> Original Data Preview</h3>
               <div class="table-responsive">
                 {{ results_csv | safe }}
+              </div>
+            </div>
+          {% endif %}
+
+          {% if preprocessed_csv is defined %}
+            <div class="preview-section">
+              <h3><i class="fas fa-table"></i> Preprocessed Data Preview</h3>
+              <div class="table-responsive">
+                {{ preprocessed_csv | safe }}
               </div>
             </div>
           {% endif %}
@@ -742,7 +760,7 @@
         </div>
 
         <!-- Word Cloud Tab -->
-        <div class="tab-pane fade" id="wordcloud" role="tabpanel">
+        <div class="tab-pane fade {% if active_tab == 'wordcloud' %}show active{% endif %}" id="wordcloud" role="tabpanel">
           <div class="wordcloud-section">
             <img src="../static/my_wordcloud.png" alt="Word Cloud" class="img-fluid">
           </div>
@@ -773,7 +791,7 @@
         </div>
 
         <!-- Summary Tab -->
-        <div class="tab-pane fade" id="summary" role="tabpanel">
+        <div class="tab-pane fade {% if active_tab == 'summary' %}show active{% endif %}" id="summary" role="tabpanel">
           <div class="summary-section">
             {% if summary_result.error %}
               <div class="summary-error">
@@ -800,8 +818,8 @@
         </div>
 
         <!-- Topic Modelling Tab -->
-        <div class="tab-pane fade" id="topic" role="tabpanel">
-          {% if results_topic_modelling is defined %}
+        <div class="tab-pane fade {% if active_tab == 'topic' %}show active{% endif %}" id="topic" role="tabpanel">
+          {% if results_topic_modelling is defined and results_topic_modelling is not none %}
             <div class="topic-modelling-results">
               <h3><i class="fas fa-project-diagram"></i> Topic Modelling Results</h3>
               
@@ -860,6 +878,10 @@
                 </div>
               </div>
             </div>
+          {% else %}
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle"></i> No topic modelling results available yet. Run topic modelling to see results.
+            </div>
           {% endif %}
 
           <div class="topic-modelling-form">
@@ -896,7 +918,7 @@
         </div>
 
         <!-- Sentiment Analysis Tab -->
-        <div class="tab-pane fade" id="sentiment" role="tabpanel" aria-labelledby="sentiment-tab">
+        <div class="tab-pane fade {% if active_tab == 'sentiment' %}show active{% endif %}" id="sentiment" role="tabpanel" aria-labelledby="sentiment-tab">
           <div class="sentiment-analysis-form">
             <h2 class="text-danger">
               <i class="fas fa-heart"></i> Sentiment Analysis Configuration
@@ -924,9 +946,20 @@
 
               <div class="form-group">
                 <label for="uncertainty_threshold">Uncertainty Threshold (for MC dropout)</label>
-                <input type="number" class="form-control" id="uncertainty_threshold" name="uncertainty_threshold" 
-                       value="0.2" step="0.1" min="0" max="1" disabled>
-                <small class="form-text text-muted">This setting is only available when using MC dropout method</small>
+                <input type="number" 
+                       class="form-control" 
+                       id="uncertainty_threshold" 
+                       name="uncertainty_threshold" 
+                       value="0.2" 
+                       step="0.05" 
+                       min="0.05" 
+                       max="0.5" 
+                       disabled>
+                <small class="form-text text-muted">
+                  This setting is only available when using MC dropout method. 
+                  Acceptable range: 0.05 to 0.5 (5% to 50% uncertainty).
+                  Higher values mean more conservative predictions.
+                </small>
               </div>
 
               <button type="submit" class="btn btn-primary">
@@ -980,6 +1013,37 @@
                 <img src="{{ url_for('static', filename=sentiment_results.file_paths.uncertainty_distribution) }}" alt="Uncertainty Distribution">
               </div>
               {% endif %}
+            </div>
+
+            <!-- Add Predictions Preview Section -->
+            <div class="predictions-preview mt-4">
+              <h4><i class="fas fa-table"></i> Predictions Preview</h4>
+              <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                  <thead>
+                    <tr>
+                      <th>Text</th>
+                      <th>Sentiment</th>
+                      <th>Probability</th>
+                      {% if sentiment_results.uncertainty %}
+                      <th>Uncertainty</th>
+                      {% endif %}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for row in predictions_preview %}
+                    <tr>
+                      <td>{{ row.text }}</td>
+                      <td>{{ row.sentiment_label }}</td>
+                      <td>{{ "%.2f"|format(row.prediction_probability) }}</td>
+                      {% if sentiment_results.uncertainty %}
+                      <td>{{ "%.2f"|format(row.uncertainty) }}</td>
+                      {% endif %}
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div class="mt-4">
@@ -1038,10 +1102,17 @@
       })
     })
 
-    // Initialize the first tab
-    var firstTab = document.querySelector('#analysisTabs button')
-    var firstTabInstance = new bootstrap.Tab(firstTab)
-    firstTabInstance.show()
+    // Find the active tab from the server-side setting
+    var activeTab = document.querySelector('#analysisTabs button.active')
+    if (activeTab) {
+      var activeTabInstance = new bootstrap.Tab(activeTab)
+      activeTabInstance.show()
+    } else {
+      // Fallback to first tab if no active tab is set
+      var firstTab = document.querySelector('#analysisTabs button')
+      var firstTabInstance = new bootstrap.Tab(firstTab)
+      firstTabInstance.show()
+    }
 
     // Existing uncertainty threshold toggle function
     function toggleUncertaintyThreshold() {

@@ -9,6 +9,7 @@ import topic_modelling as tm
 import text_processing as tp
 import summarization as sum
 import sentiment_prediction as sp
+import preprocessing as pp
 from werkzeug.utils import secure_filename
 import numpy as np
 import pandas as pd
@@ -117,6 +118,7 @@ def get_or_create_analysis_results(filepath):
     if filepath not in session['analysis_results']:
         session['analysis_results'][filepath] = {
             'preview': None,
+            'preprocessed_preview': None,
             'column_info': None,
             'summary_result': None,
             'topic_modelling_results': None,
@@ -142,63 +144,75 @@ def home():
 @app.route('/analyze', methods=['GET', 'POST'])
 def analyze():
     if request.method == 'POST':
-        if 'action' not in request.form:
-            flash('Invalid form submission', 'danger')
-            return redirect(request.url)
-
-        if request.form['action'] == 'Analyze':
-            if 'csvfile' not in request.files:
-                flash('No file selected', 'danger')
-                return redirect(request.url)
-            
-            file = request.files['csvfile']
-            if file.filename == '':
-                flash('No file selected', 'danger')
-                return redirect(request.url)
-            
-            if file and file.filename.endswith('.csv'):
-                filename = secure_filename(file.filename)
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(filepath)
+        if 'action' in request.form:
+            if request.form['action'] == 'Analyze':
+                if 'csvfile' not in request.files:
+                    flash('No file part', 'danger')
+                    return redirect(request.url)
                 
-                # Initialize or get analysis results
-                analysis_results = get_or_create_analysis_results(filename)
+                file = request.files['csvfile']
+                if file.filename == '':
+                    flash('No selected file', 'danger')
+                    return redirect(request.url)
                 
-                # Generate preview and column info if not already in session
-                if not analysis_results['preview'] or not analysis_results['column_info']:
-                    preview = csv_handler.get_preview(filepath)
-                    column_info = csv_handler.get_column_info(filepath)
-                    store_analysis_results(filename, {
-                        'preview': preview,
-                        'column_info': column_info
-                    })
-                
-                # Generate word cloud if not already generated
-                if not analysis_results['wordcloud_generated']:
-                    tp.generate_wordcloud(filepath)
-                    store_analysis_results(filename, {'wordcloud_generated': True})
-                
-                # Generate summary if not already in session
-                if not analysis_results['summary_result']:
-                    summary_result = sum.generate_summary(filepath)
-                    store_analysis_results(filename, {'summary_result': summary_result})
-                
-                # Get the latest results from session
-                analysis_results = get_or_create_analysis_results(filename)
-                
-                return render_template('analysis_results.html', 
-                                     filepath=filename,
-                                     results_csv=analysis_results['preview'],
-                                     column_info=analysis_results['column_info'],
-                                     summary_result=analysis_results['summary_result'],
-                                     available_models=sp.AVAILABLE_MODELS,
-                                     testing_methods=sp.TESTING_METHODS)
+                if file and file.filename.endswith('.csv'):
+                    filename = secure_filename(file.filename)
+                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    file.save(filepath)
+                    
+                    try:
+                        # Preprocess the file
+                        preprocessed_filepath = pp.preprocess_file(filepath)
+                        
+                        # Initialize or get analysis results
+                        analysis_results = get_or_create_analysis_results(filename)
+                        
+                        # Generate preview and column info if not already in session
+                        if not analysis_results['preview'] or not analysis_results['column_info']:
+                            preview = csv_handler.get_preview(filepath)
+                            preprocessed_preview = csv_handler.get_preview(preprocessed_filepath)
+                            column_info = csv_handler.get_column_info(filepath)
+                            
+                            # Store all results including preprocessed filepath
+                            store_analysis_results(filename, {
+                                'preview': preview,
+                                'preprocessed_preview': preprocessed_preview,
+                                'column_info': column_info,
+                                'preprocessed_filepath': preprocessed_filepath,
+                                'original_filepath': filepath
+                            })
+                        
+                        # Generate word cloud if not already generated
+                        if not analysis_results['wordcloud_generated']:
+                            tp.generate_wordcloud(filepath)
+                            store_analysis_results(filename, {'wordcloud_generated': True})
+                        
+                        # Generate summary if not already in session
+                        if not analysis_results['summary_result']:
+                            summary_result = sum.generate_summary(filepath)
+                            store_analysis_results(filename, {'summary_result': summary_result})
+                        
+                        # Get the latest results from session
+                        analysis_results = get_or_create_analysis_results(filename)
+                        
+                        return render_template('analysis_results.html', 
+                                             filepath=filename,
+                                             results_csv=analysis_results['preview'],
+                                             preprocessed_csv=analysis_results['preprocessed_preview'],
+                                             column_info=analysis_results['column_info'],
+                                             summary_result=analysis_results['summary_result'],
+                                             available_models=sp.AVAILABLE_MODELS,
+                                             testing_methods=sp.TESTING_METHODS)
+                    except Exception as e:
+                        logger.error(f"Error processing file: {str(e)}")
+                        flash(f'Error processing file: {str(e)}', 'danger')
+                        return redirect(request.url)
+                else:
+                    flash('Please upload a CSV file', 'danger')
+                    return redirect(request.url)
             else:
-                flash('Please upload a CSV file', 'danger')
+                flash('Invalid action', 'danger')
                 return redirect(request.url)
-        else:
-            flash('Invalid action', 'danger')
-            return redirect(request.url)
     
     return render_template('analyze.html')
 
@@ -210,7 +224,17 @@ def sentiment_analysis():
         filepath = request.form.get('filepath')
         model_name = request.form.get('model_name')
         testing_method = request.form.get('testing_method')
-        uncertainty_threshold = float(request.form.get('uncertainty_threshold', 0.2))
+        
+        # Validate uncertainty threshold
+        try:
+            uncertainty_threshold = float(request.form.get('uncertainty_threshold', 0.2))
+            if testing_method == 'mc':
+                if uncertainty_threshold < 0.05 or uncertainty_threshold > 0.5:
+                    flash('Uncertainty threshold must be between 0.05 and 0.5 (5% to 50%)', 'danger')
+                    return redirect(url_for('analyze'))
+        except ValueError:
+            flash('Invalid uncertainty threshold value', 'danger')
+            return redirect(url_for('analyze'))
         
         if not all([filepath, model_name, testing_method]):
             flash('Missing required parameters', 'danger')
@@ -219,13 +243,33 @@ def sentiment_analysis():
         # Get existing analysis results
         analysis_results = get_or_create_analysis_results(filepath)
         
-        # Run sentiment analysis
+        # Check if we have the preprocessed file path
+        if 'preprocessed_filepath' not in analysis_results:
+            # Try to regenerate the preprocessed file
+            original_filepath = os.path.join(app.config['UPLOAD_FOLDER'], filepath)
+            if os.path.exists(original_filepath):
+                preprocessed_filepath = pp.preprocess_file(original_filepath)
+                store_analysis_results(filepath, {'preprocessed_filepath': preprocessed_filepath})
+            else:
+                flash('Original file not found. Please upload the file again.', 'danger')
+                return redirect(url_for('analyze'))
+        
+        # Run sentiment analysis using the preprocessed file
         results = sp.perform_sentiment_analysis(
             file_name=os.path.splitext(filepath)[0],
             model_name=model_name,
             testing_method=testing_method,
             uncertainty_threshold=uncertainty_threshold
         )
+        
+        # Read the unpreprocessed predictions file for preview
+        try:
+            predictions_df = pd.read_csv(results['file_paths']['unpreprocessed_predictions'])
+            # Get first 10 rows for preview
+            predictions_preview = predictions_df.head(10).to_dict('records')
+        except Exception as e:
+            logger.error(f"Error reading predictions file: {str(e)}")
+            predictions_preview = []
         
         # Store results in session
         store_analysis_results(filepath, {'sentiment_results': results})
@@ -236,15 +280,18 @@ def sentiment_analysis():
         return render_template('analysis_results.html',
                              filepath=filepath,
                              results_csv=analysis_results['preview'],
+                             preprocessed_csv=analysis_results.get('preprocessed_preview'),
                              column_info=analysis_results['column_info'],
                              summary_result=analysis_results['summary_result'],
                              sentiment_results=results,
+                             results_topic_modelling=analysis_results.get('topic_modelling_results'),
+                             predictions_preview=predictions_preview,
                              available_models=sp.AVAILABLE_MODELS,
-                             testing_methods=sp.TESTING_METHODS)
-                             
+                             testing_methods=sp.TESTING_METHODS,
+                             active_tab='sentiment')
     except Exception as e:
         logger.error(f"Error in sentiment analysis: {str(e)}")
-        flash(f'Error performing sentiment analysis: {str(e)}', 'danger')
+        flash(f'Error in sentiment analysis: {str(e)}', 'danger')
         return redirect(url_for('analyze'))
 
 @app.route('/topic_modelling', methods=['POST'])
@@ -274,14 +321,27 @@ def topic_modelling_form():
     # Get the latest results from session
     analysis_results = get_or_create_analysis_results(filepath)
     
+    # Get predictions preview if it exists
+    predictions_preview = []
+    if analysis_results.get('sentiment_results'):
+        try:
+            predictions_df = pd.read_csv(analysis_results['sentiment_results']['file_paths']['unpreprocessed_predictions'])
+            predictions_preview = predictions_df.head(10).to_dict('records')
+        except Exception as e:
+            logger.error(f"Error reading predictions file: {str(e)}")
+    
     return render_template('analysis_results.html',
                          filepath=filepath,
                          results_csv=analysis_results['preview'],
+                         preprocessed_csv=analysis_results.get('preprocessed_preview'),
                          column_info=analysis_results['column_info'],
                          results_topic_modelling=results,
                          summary_result=analysis_results['summary_result'],
+                         sentiment_results=analysis_results.get('sentiment_results'),
+                         predictions_preview=predictions_preview,
                          available_models=sp.AVAILABLE_MODELS,
-                         testing_methods=sp.TESTING_METHODS)
+                         testing_methods=sp.TESTING_METHODS,
+                         active_tab='topic')
 
 @app.route('/contribute')
 def contribute():
@@ -393,10 +453,21 @@ def contact():
     """Contact page"""
     return render_template('contact.html')
 
-@app.route('/files/<path:filename>')
+@app.route('/download/<path:filename>')
 def download(filename):
-    """File download endpoint"""
-    return send_from_directory(directory='files', filename=filename, as_attachment=True)
+    try:
+        # Check if the file is from sentiment analysis results
+        if 'results' in filename:
+            # Extract the directory path from the filename
+            directory = os.path.dirname(filename)
+            filename = os.path.basename(filename)
+            return send_from_directory(directory, filename, as_attachment=True)
+        else:
+            # For other files, use the default uploads directory
+            return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
+    except Exception as e:
+        flash(f'Error downloading file: {str(e)}', 'error')
+        return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)
