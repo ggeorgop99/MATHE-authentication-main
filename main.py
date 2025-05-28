@@ -243,6 +243,9 @@ def sentiment_analysis():
         # Get existing analysis results
         analysis_results = get_or_create_analysis_results(filepath)
         
+        # Store current topic modelling results before running sentiment analysis
+        current_topic_results = analysis_results.get('topic_modelling_results')
+        
         # Check if we have the preprocessed file path
         if 'preprocessed_filepath' not in analysis_results:
             # Try to regenerate the preprocessed file
@@ -271,8 +274,11 @@ def sentiment_analysis():
             logger.error(f"Error reading predictions file: {str(e)}")
             predictions_preview = []
         
-        # Store results in session
-        store_analysis_results(filepath, {'sentiment_results': results})
+        # Store results in session, preserving topic modelling results
+        store_analysis_results(filepath, {
+            'sentiment_results': results,
+            'topic_modelling_results': current_topic_results
+        })
         
         # Get the latest results from session
         analysis_results = get_or_create_analysis_results(filepath)
@@ -284,7 +290,7 @@ def sentiment_analysis():
                              column_info=analysis_results['column_info'],
                              summary_result=analysis_results['summary_result'],
                              sentiment_results=results,
-                             results_topic_modelling=analysis_results.get('topic_modelling_results'),
+                             results_topic_modelling=current_topic_results,
                              predictions_preview=predictions_preview,
                              available_models=sp.AVAILABLE_MODELS,
                              testing_methods=sp.TESTING_METHODS,
