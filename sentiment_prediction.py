@@ -244,9 +244,19 @@ def perform_sentiment_analysis(file_name, model_name, testing_method="mc", uncer
 
         # Load model and vectorizer
         print("Loading model and vectorizer...")
-        model = load_model(model_path)
-        with open(vectorizer_path, "rb") as f:
-            vec = pickle.load(f)
+        try:
+            # Clear any existing TensorFlow session
+            tf.keras.backend.clear_session()
+            
+            # Load model with custom_objects to handle InputLayer
+            model = load_model(model_path, compile=False)
+            
+            # Load vectorizer
+            with open(vectorizer_path, "rb") as f:
+                vec = pickle.load(f)
+        except Exception as e:
+            print(f"Error loading model: {str(e)}")
+            raise
 
         # Load both preprocessed and original data
         print("Loading data...")

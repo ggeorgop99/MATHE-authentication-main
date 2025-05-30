@@ -13,6 +13,8 @@ import preprocessing as pp
 from werkzeug.utils import secure_filename
 import numpy as np
 import pandas as pd
+from flask_session import Session 
+
 
 # Set up logging
 logging.basicConfig(
@@ -27,8 +29,14 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = os.urandom(24)
 app.config['UPLOAD_FOLDER'] = 'files/temp'
 
+app.config["SESSION_PERMANENT"] = False # So sessions expire when browser closes (optional)
+app.config["SESSION_TYPE"] = "filesystem" # Store sessions on the filesystem
+app.config["SESSION_FILE_DIR"] = "./flask_session" # Directory to store session files
+
+Session(app) # Initialize the Session extension
+
 # Create required directories
-for directory in ['data/datasets', 'data/annotations', 'files/temp', 'static']:
+for directory in ['data/datasets', 'data/annotations', 'files/temp', 'static', app.config["SESSION_FILE_DIR"]]:
     os.makedirs(directory, exist_ok=True)
 
 def convert_to_serializable(obj):
@@ -112,10 +120,14 @@ def save_annotated_text(text_id, sentiment, comments):
 
 def get_or_create_analysis_results(filepath):
     """Get analysis results from session or create new ones"""
+    logger.info(f"[SESSION_DEBUG] get_or_create_analysis_results called for filepath: '{filepath}'")
     if 'analysis_results' not in session:
+        logger.info("[SESSION_DEBUG] 'analysis_results' not in session. Initializing.")
         session['analysis_results'] = {}
-    
+        session.modified = True
+
     if filepath not in session['analysis_results']:
+        logger.info(f"[SESSION_DEBUG] filepath '{filepath}' not in session['analysis_results']. Initializing new structure for it.")
         session['analysis_results'][filepath] = {
             'preview': None,
             'preprocessed_preview': None,
@@ -123,18 +135,32 @@ def get_or_create_analysis_results(filepath):
             'summary_result': None,
             'topic_modelling_results': None,
             'sentiment_results': None,
-            'wordcloud_generated': False
+            'wordcloud_generated': False,
+            'predictions_preview': None
         }
+        session.modified = True
+    else:
+        logger.info(f"[SESSION_DEBUG] filepath '{filepath}' found in session['analysis_results'].")
     
+    # Log the current state for this filepath before returning
+    # logger.debug(f"[SESSION_DEBUG] Current session data for '{filepath}': {session['analysis_results'].get(filepath)}")
     return session['analysis_results'][filepath]
 
-def store_analysis_results(filepath, results):
+def store_analysis_results(filepath, results_to_update):
     """Store analysis results in session with proper type conversion"""
-    analysis_results = get_or_create_analysis_results(filepath)
-    for key, value in results.items():
-        analysis_results[key] = convert_to_serializable(value)
-    session['analysis_results'][filepath] = analysis_results
+    logger.info(f"[SESSION_DEBUG] store_analysis_results called for filepath: '{filepath}'")
+    logger.info(f"[SESSION_DEBUG] Results to update: {list(results_to_update.keys())}") # Log which keys are being updated
+
+    current_results_for_file = get_or_create_analysis_results(filepath)
+    logger.info(f"[SESSION_DEBUG] BEFORE update, session data for '{filepath}': {json.dumps(convert_to_serializable(current_results_for_file.copy()), indent=2)}")
+
+    for key, value in results_to_update.items():
+        current_results_for_file[key] = convert_to_serializable(value)
+    
+    logger.info(f"[SESSION_DEBUG] AFTER update, session data for '{filepath}': {json.dumps(convert_to_serializable(current_results_for_file.copy()), indent=2)}")
     session.modified = True
+    logger.info(f"[SESSION_DEBUG] session.modified set to True for filepath '{filepath}'.")
+
 
 @app.route('/')
 def home():
@@ -182,15 +208,15 @@ def analyze():
                                 'original_filepath': filepath
                             })
                         
-                        # Generate word cloud if not already generated
-                        if not analysis_results['wordcloud_generated']:
-                            tp.generate_wordcloud(filepath)
-                            store_analysis_results(filename, {'wordcloud_generated': True})
-                        
-                        # Generate summary if not already in session
-                        if not analysis_results['summary_result']:
-                            summary_result = sum.generate_summary(filepath)
-                            store_analysis_results(filename, {'summary_result': summary_result})
+                            # Generate word cloud if not already generated
+                            if not analysis_results['wordcloud_generated']:
+                                tp.generate_wordcloud(filepath)
+                                store_analysis_results(filename, {'wordcloud_generated': True})
+                            
+                            # Generate summary if not already in session
+                            if not analysis_results['summary_result']:
+                                summary_result = sum.generate_summary(filepath)
+                                store_analysis_results(filename, {'summary_result': summary_result})
                         
                         # Get the latest results from session
                         analysis_results = get_or_create_analysis_results(filename)
@@ -218,181 +244,247 @@ def analyze():
 
 @app.route('/sentiment_analysis', methods=['POST'])
 def sentiment_analysis():
-    """Handle sentiment analysis request"""
+    filepath = None  # Initialize filepath to None for broader scope in except block if needed
     try:
-        # Get parameters from form
         filepath = request.form.get('filepath')
         model_name = request.form.get('model_name')
         testing_method = request.form.get('testing_method')
         
-        # Validate uncertainty threshold
+        logger.info(f"[SENTIMENT_ROUTE_DEBUG] Received filepath: '{filepath}' for model: {model_name}, method: {testing_method}")
+
+        # Validate uncertainty threshold (from your original code)
         try:
             uncertainty_threshold = float(request.form.get('uncertainty_threshold', 0.2))
             if testing_method == 'mc':
                 if uncertainty_threshold < 0.05 or uncertainty_threshold > 0.5:
                     flash('Uncertainty threshold must be between 0.05 and 0.5 (5% to 50%)', 'danger')
-                    return redirect(url_for('analyze'))
+                    return redirect(url_for('analyze')) # Or back to results page if possible
         except ValueError:
             flash('Invalid uncertainty threshold value', 'danger')
             return redirect(url_for('analyze'))
-        
+
         if not all([filepath, model_name, testing_method]):
             flash('Missing required parameters', 'danger')
             return redirect(url_for('analyze'))
+
+        # Get current analysis data for preprocessed_filepath check (from your original code)
+        current_file_data = get_or_create_analysis_results(filepath) 
         
-        # Get existing analysis results
-        analysis_results = get_or_create_analysis_results(filepath)
-        
-        # Store current topic modelling results before running sentiment analysis
-        current_topic_results = analysis_results.get('topic_modelling_results')
-        
-        # Check if we have the preprocessed file path
-        if 'preprocessed_filepath' not in analysis_results:
-            # Try to regenerate the preprocessed file
-            original_filepath = os.path.join(app.config['UPLOAD_FOLDER'], filepath)
-            if os.path.exists(original_filepath):
-                preprocessed_filepath = pp.preprocess_file(original_filepath)
-                store_analysis_results(filepath, {'preprocessed_filepath': preprocessed_filepath})
+        if 'preprocessed_filepath' not in current_file_data or current_file_data['preprocessed_filepath'] is None:
+            original_upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filepath) # Original filename
+            if os.path.exists(original_upload_path):
+                preprocessed_file_actual_path = pp.preprocess_file(original_upload_path)
+                store_analysis_results(filepath, {'preprocessed_filepath': preprocessed_file_actual_path})
+                current_file_data['preprocessed_filepath'] = preprocessed_file_actual_path # Update in current scope
             else:
                 flash('Original file not found. Please upload the file again.', 'danger')
                 return redirect(url_for('analyze'))
         
-        # Run sentiment analysis using the preprocessed file
-        results = sp.perform_sentiment_analysis(
-            file_name=os.path.splitext(filepath)[0],
-            model_name=model_name,
-            testing_method=testing_method,
-            uncertainty_threshold=uncertainty_threshold
-        )
-        
-        # Read the unpreprocessed predictions file for preview
+        # Ensure 'results_from_sp' and 'predictions_preview_data' are defined before use
+        results_from_sp = None
+        predictions_preview_data = []
+
         try:
-            predictions_df = pd.read_csv(results['file_paths']['unpreprocessed_predictions'])
-            # Get first 10 rows for preview
-            predictions_preview = predictions_df.head(10).to_dict('records')
-        except Exception as e:
-            logger.error(f"Error reading predictions file: {str(e)}")
-            predictions_preview = []
-        
-        # Store results in session, preserving topic modelling results
+            # Run sentiment analysis (this is 'results' in your original code)
+            results_from_sp = sp.perform_sentiment_analysis(
+                file_name=os.path.splitext(filepath)[0], # Ensure this matches what sp expects
+                model_name=model_name,
+                testing_method=testing_method,
+                uncertainty_threshold=uncertainty_threshold
+            )
+            
+            # Read the unpreprocessed predictions file for preview (from your original code)
+            if results_from_sp and 'file_paths' in results_from_sp and 'unpreprocessed_predictions' in results_from_sp['file_paths']:
+                try:
+                    predictions_df = pd.read_csv(results_from_sp['file_paths']['unpreprocessed_predictions'])
+                    predictions_preview_data = predictions_df.head(10).to_dict('records')
+                except Exception as e_pred_file:
+                    logger.error(f"Error reading predictions file: {str(e_pred_file)}")
+                    predictions_preview_data = [] # Ensure it's an empty list on error
+            else:
+                logger.warning("Predictions file path not found in sentiment analysis results.")
+
+        except Exception as e_sp: # Catch errors specifically from sentiment_prediction.py
+            logger.error(f"Error during sp.perform_sentiment_analysis or predictions_preview creation: {str(e_sp)}", exc_info=True)
+            if "InputLayer" in str(e_sp): # From your original specific error handling
+                flash('Error: The sentiment model is incompatible with the current TensorFlow version. Please contact the administrator.', 'danger')
+            else:
+                flash(f'Error performing sentiment analysis: {str(e_sp)}', 'danger')
+            return redirect(url_for('analyze')) # Or a more specific error page / back to results
+            
+        # Now store the results
         store_analysis_results(filepath, {
-            'sentiment_results': results,
-            'topic_modelling_results': current_topic_results
+            'sentiment_results': results_from_sp,
+            'predictions_preview': predictions_preview_data
         })
         
-        # Get the latest results from session
-        analysis_results = get_or_create_analysis_results(filepath)
+        # Get the complete, updated data for rendering
+        analysis_data_for_template = get_or_create_analysis_results(filepath) 
+        logger.info(f"[SENTIMENT_ROUTE_DEBUG] Final session data for '{filepath}' before rendering: {json.dumps(convert_to_serializable(analysis_data_for_template.copy()), indent=2)}")
         
         return render_template('analysis_results.html',
-                             filepath=filepath,
-                             results_csv=analysis_results['preview'],
-                             preprocessed_csv=analysis_results.get('preprocessed_preview'),
-                             column_info=analysis_results['column_info'],
-                             summary_result=analysis_results['summary_result'],
-                             sentiment_results=results,
-                             results_topic_modelling=current_topic_results,
-                             predictions_preview=predictions_preview,
-                             available_models=sp.AVAILABLE_MODELS,
-                             testing_methods=sp.TESTING_METHODS,
-                             active_tab='sentiment')
+                               filepath=filepath,
+                               results_csv=analysis_data_for_template.get('preview'),
+                               preprocessed_csv=analysis_data_for_template.get('preprocessed_preview'),
+                               column_info=analysis_data_for_template.get('column_info'),
+                               summary_result=analysis_data_for_template.get('summary_result'),
+                               sentiment_results=analysis_data_for_template.get('sentiment_results'), # Use the newly fetched data
+                               results_topic_modelling=analysis_data_for_template.get('topic_modelling_results'), # This should be preserved
+                               predictions_preview=analysis_data_for_template.get('predictions_preview'), # Use the newly fetched data
+                               available_models=sp.AVAILABLE_MODELS,
+                               testing_methods=sp.TESTING_METHODS,
+                               active_tab='sentiment')
     except Exception as e:
-        logger.error(f"Error in sentiment analysis: {str(e)}")
-        flash(f'Error in sentiment analysis: {str(e)}', 'danger')
+        # General exception handler for the route
+        logger.error(f"Overall error in sentiment analysis route (filepath: {filepath}): {str(e)}", exc_info=True)
+        flash(f'An unexpected error occurred in sentiment analysis: {str(e)}', 'danger')
         return redirect(url_for('analyze'))
 
 @app.route('/topic_modelling', methods=['POST'])
 def topic_modelling_form():
-    # Get basic parameters from form
-    no_topics = int(request.form.get('no_topics', 5))
-    no_words = int(request.form.get('no_words', 10))
-    mode = request.form.get('mode', 'tfidf')
+    try:
+        # Get basic parameters from form
+        no_topics = int(request.form.get('no_topics', 5))
+        no_words = int(request.form.get('no_words', 10))
+        mode = request.form.get('mode', 'tfidf')
+        
+        # Get common parameters from form
+        max_df = float(request.form.get('max_df', 0.95))
+        min_df = int(request.form.get('min_df', 2))
+        max_features = int(request.form.get('max_features', 1000))
+        max_iter = int(request.form.get('max_iter', 300))
+        
+        # Get method-specific parameters
+        if mode == 'tfidf':
+            l1_ratio = float(request.form.get('l1_ratio', 0.5))
+            init = request.form.get('init', 'nndsvd')
+            params = {
+                'l1_ratio': l1_ratio,
+                'init': init
+            }
+        elif mode == 'lda':
+            learning_decay = float(request.form.get('learning_decay', 0.7))
+            learning_offset = float(request.form.get('learning_offset', 10))
+            params = {
+                'learning_decay': learning_decay,
+                'learning_offset': learning_offset
+            }
+        elif mode == 'corex':
+            anchor_strength = float(request.form.get('anchor_strength', 2.0))
+            significance_threshold = float(request.form.get('significance_threshold', 0.05))
+            params = {
+                'anchor_strength': anchor_strength,
+                'significance_threshold': significance_threshold
+            }
+        else:
+            flash('Invalid topic modelling method', 'danger')
+            return redirect(url_for('analyze'))
+        
+        # Validate parameters
+        if not (0 <= max_df <= 1):
+            flash('Maximum document frequency must be between 0 and 1', 'danger')
+            return redirect(url_for('analyze'))
+        if min_df < 1:
+            flash('Minimum document frequency must be at least 1', 'danger')
+            return redirect(url_for('analyze'))
+        if max_features < 100:
+            flash('Maximum features must be at least 100', 'danger')
+            return redirect(url_for('analyze'))
+        if max_iter < 100:
+            flash('Maximum iterations must be at least 100', 'danger')
+            return redirect(url_for('analyze'))
+        
+        # Method-specific validations
+        if mode == 'tfidf':
+            if not (0 <= params['l1_ratio'] <= 1):
+                flash('L1/L2 ratio must be between 0 and 1', 'danger')
+                return redirect(url_for('analyze'))
+            if params['init'] not in ['nndsvd', 'random']:
+                flash('Invalid initialization method', 'danger')
+                return redirect(url_for('analyze'))
+        elif mode == 'lda':
+            if not (0.5 <= params['learning_decay'] <= 1.0):
+                flash('Learning decay must be between 0.5 and 1.0', 'danger')
+                return redirect(url_for('analyze'))
+            if params['learning_offset'] < 1:
+                flash('Learning offset must be at least 1', 'danger')
+                return redirect(url_for('analyze'))
+        elif mode == 'corex':
+            if not (1.0 <= params['anchor_strength'] <= 10.0):
+                flash('Anchor strength must be between 1.0 and 10.0', 'danger')
+                return redirect(url_for('analyze'))
+            if not (0.0 <= params['significance_threshold'] <= 1.0):
+                flash('Significance threshold must be between 0.0 and 1.0', 'danger')
+                return redirect(url_for('analyze'))
+        
+        # Get the filepath from the session or request
+        filepath = request.form.get('filepath')
+        logger.info(f"[TOPIC_ROUTE_DEBUG] Received filepath: '{filepath}'")
+
+        if not filepath:
+            flash('No file selected for analysis', 'danger')
+            return redirect(url_for('analyze'))
+        
+        full_filepath = os.path.join(app.config['UPLOAD_FOLDER'], filepath)
+        
+        # Get existing analysis results (ensures initial structure and marks modified if new)
+        analysis_results = get_or_create_analysis_results(filepath) 
+        
+        # Run topic modeling with all parameters
+        results = tm.topic_modelling_function(
+            full_filepath, 
+            no_topics, 
+            no_words, 
+            mode,
+            max_df=max_df,
+            min_df=min_df,
+            max_features=max_features,
+            max_iter=max_iter,
+            **params
+        )
+        
+        # Store ONLY the new topic modeling results. 
+        # store_analysis_results will merge this into the existing dictionary.
+        store_analysis_results(filepath, {
+            'topic_modelling_results': results
+        })
+        
+        # Get the latest results from session to pass to render_template
+        analysis_results = get_or_create_analysis_results(filepath) 
+        logger.info(f"[TOPIC_ROUTE_DEBUG] Final session data for '{filepath}' before rendering: {json.dumps(convert_to_serializable(analysis_results.copy()), indent=2)}")
+        
+        # Get predictions preview if it exists (good current logic)
+        predictions_preview = []
+        if analysis_results.get('sentiment_results') and \
+        analysis_results['sentiment_results'].get('file_paths') and \
+        analysis_results['sentiment_results']['file_paths'].get('unpreprocessed_predictions'):
+            try:
+                predictions_df = pd.read_csv(analysis_results['sentiment_results']['file_paths']['unpreprocessed_predictions'])
+                predictions_preview = predictions_df.head(10).to_dict('records')
+            except Exception as e:
+                logger.error(f"Error reading predictions file in topic_modelling_form: {str(e)}")
+        
+        return render_template('analysis_results.html',
+                            filepath=filepath,
+                            results_csv=analysis_results.get('preview'),
+                            preprocessed_csv=analysis_results.get('preprocessed_preview'),
+                            column_info=analysis_results.get('column_info'),
+                            results_topic_modelling=analysis_results.get('topic_modelling_results'),
+                            summary_result=analysis_results.get('summary_result'),
+                            sentiment_results=analysis_results.get('sentiment_results'),
+                            predictions_preview=analysis_results.get('predictions_preview'),
+                            available_models=sp.AVAILABLE_MODELS,
+                            testing_methods=sp.TESTING_METHODS,
+                            active_tab='topic')
     
-    # Get advanced parameters from form
-    max_df = float(request.form.get('max_df', 0.95))
-    min_df = int(request.form.get('min_df', 2))
-    max_features = int(request.form.get('max_features', 1000))
-    l1_ratio = float(request.form.get('l1_ratio', 0.5))
-    max_iter = int(request.form.get('max_iter', 300))
-    init = request.form.get('init', 'nndsvd')
-    
-    # Validate parameters
-    if not (0 <= max_df <= 1):
-        flash('Maximum document frequency must be between 0 and 1', 'danger')
-        return redirect(url_for('analyze'))
-    if min_df < 1:
-        flash('Minimum document frequency must be at least 1', 'danger')
-        return redirect(url_for('analyze'))
-    if max_features < 100:
-        flash('Maximum features must be at least 100', 'danger')
-        return redirect(url_for('analyze'))
-    if not (0 <= l1_ratio <= 1):
-        flash('L1/L2 ratio must be between 0 and 1', 'danger')
-        return redirect(url_for('analyze'))
-    if max_iter < 100:
-        flash('Maximum iterations must be at least 100', 'danger')
-        return redirect(url_for('analyze'))
-    if init not in ['nndsvd', 'random']:
-        flash('Invalid initialization method', 'danger')
-        return redirect(url_for('analyze'))
-    
-    # Get the filepath from the session or request
-    filepath = request.form.get('filepath')
-    if not filepath:
-        flash('No file selected for analysis', 'danger')
-        return redirect(url_for('analyze'))
-    
-    full_filepath = os.path.join(app.config['UPLOAD_FOLDER'], filepath)
-    
-    # Get existing analysis results
-    analysis_results = get_or_create_analysis_results(filepath)
-    
-    # Store current sentiment results before running topic modelling
-    current_sentiment_results = analysis_results.get('sentiment_results')
-    
-    # Run topic modeling with all parameters
-    results = tm.topic_modelling_function(
-        full_filepath, 
-        no_topics, 
-        no_words, 
-        mode,
-        max_df=max_df,
-        min_df=min_df,
-        max_features=max_features,
-        l1_ratio=l1_ratio,
-        max_iter=max_iter,
-        init=init
-    )
-    
-    # Store results in session, preserving sentiment results
-    store_analysis_results(filepath, {
-        'topic_modelling_results': results,
-        'sentiment_results': current_sentiment_results
-    })
-    
-    # Get the latest results from session
-    analysis_results = get_or_create_analysis_results(filepath)
-    
-    # Get predictions preview if it exists
-    predictions_preview = []
-    if analysis_results.get('sentiment_results'):
-        try:
-            predictions_df = pd.read_csv(analysis_results['sentiment_results']['file_paths']['unpreprocessed_predictions'])
-            predictions_preview = predictions_df.head(10).to_dict('records')
-        except Exception as e:
-            logger.error(f"Error reading predictions file: {str(e)}")
-    
-    return render_template('analysis_results.html',
-                         filepath=filepath,
-                         results_csv=analysis_results['preview'],
-                         preprocessed_csv=analysis_results.get('preprocessed_preview'),
-                         column_info=analysis_results['column_info'],
-                         results_topic_modelling=results,
-                         summary_result=analysis_results['summary_result'],
-                         sentiment_results=analysis_results.get('sentiment_results'),
-                         predictions_preview=predictions_preview,
-                         available_models=sp.AVAILABLE_MODELS,
-                         testing_methods=sp.TESTING_METHODS,
-                         active_tab='topic')
+    except Exception as e:
+        logger.error(f"Error in topic modelling route: {str(e)}", exc_info=True) # Added exc_info for traceback
+        flash(f'Error in topic modelling: {str(e)}', 'danger')
+        # It might be better to redirect to the analysis page with the filepath if possible,
+        # or a generic analyze page.
+        # If filepath is known:
+        # return redirect(url_for('analyze_file_results_page', filename=filepath_variable_if_available)) 
+        return redirect(url_for('analyze')) 
 
 @app.route('/contribute')
 def contribute():

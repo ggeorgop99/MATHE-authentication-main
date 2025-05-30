@@ -873,7 +873,13 @@
                   <div class="col-md-4">
                     <div class="metric-card">
                       <h5>Coherence Score</h5>
-                      <p class="metric-value">{{ "%.4f"|format(results_topic_modelling.coherence_score) }}</p>
+                      <p class="metric-value">
+                        {% if results_topic_modelling.coherence_score is not none %}
+                          {{ "%.4f"|format(results_topic_modelling.coherence_score) }}
+                        {% else %}
+                          N/A
+                        {% endif %}
+                      </p>
                       <p class="metric-description">Measures the semantic coherence of topics</p>
                     </div>
                   </div>
@@ -931,9 +937,11 @@
               <div class="form-group">
                 <label for="mode">Modelling Method</label>
                 <select class="form-control" id="mode" name="mode">
-                  <option value="tfidf">TF-IDF (Term Frequency-Inverse Document Frequency)</option>
+                  <option value="tfidf">TF-IDF with NMF (Term Frequency-Inverse Document Frequency)</option>
+                  <option value="lda">LDA (Latent Dirichlet Allocation)</option>
+                  <option value="corex">CorEx (Correlation Explanation)</option>
                 </select>
-                <small class="form-text text-muted">TF-IDF is recommended for most topic modelling tasks</small>
+                <small class="form-text text-muted">Choose the topic modelling method that best suits your needs</small>
               </div>
 
               <!-- Advanced Parameters -->
@@ -944,6 +952,7 @@
                   Adjust them if you want to fine-tune the results.
                 </div>
 
+                <!-- Common Parameters -->
                 <div class="row">
                   <div class="col-md-6">
                     <div class="form-group">
@@ -963,42 +972,82 @@
                   </div>
                 </div>
 
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="form-group">
-                      <label for="max_features">Maximum Features</label>
-                      <input type="number" class="form-control" id="max_features" name="max_features" 
-                             min="100" step="100" value="1000">
-                      <small class="form-text text-muted">Maximum number of features (terms) to consider</small>
+                <!-- TF-IDF Specific Parameters -->
+                <div id="tfidf-params" class="method-params">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="l1_ratio">L1/L2 Regularization Ratio</label>
+                        <input type="number" class="form-control" id="l1_ratio" name="l1_ratio" 
+                               step="0.1" min="0.0" max="1.0" value="0.5">
+                        <small class="form-text text-muted">Mixing parameter for L1/L2 regularization (0.0 to 1.0)</small>
+                      </div>
                     </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="form-group">
-                      <label for="l1_ratio">L1/L2 Regularization Ratio</label>
-                      <input type="number" class="form-control" id="l1_ratio" name="l1_ratio" 
-                             step="0.1" min="0.0" max="1.0" value="0.5">
-                      <small class="form-text text-muted">Mixing parameter for L1/L2 regularization (0.0 to 1.0)</small>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="init">Initialization Method</label>
+                        <select class="form-control" id="init" name="init">
+                          <option value="nndsvd">NNDSVD (Non-negative Double Singular Value Decomposition)</option>
+                          <option value="random">Random</option>
+                        </select>
+                        <small class="form-text text-muted">Method used to initialize the algorithm</small>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div class="row">
+                <!-- LDA Specific Parameters -->
+                <div id="lda-params" class="method-params" style="display: none;">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="learning_decay">Learning Decay</label>
+                        <input type="number" class="form-control" id="learning_decay" name="learning_decay" 
+                               step="0.05" min="0.5" max="1.0" value="0.7">
+                        <small class="form-text text-muted">Controls the learning rate schedule (0.5 to 1.0)</small>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="learning_offset">Learning Offset</label>
+                        <input type="number" class="form-control" id="learning_offset" name="learning_offset" 
+                               min="1" value="10">
+                        <small class="form-text text-muted">Initial learning rate (higher values = slower learning)</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- CorEx Specific Parameters -->
+                <div id="corex-params" class="method-params" style="display: none;">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="anchor_strength">Anchor Strength</label>
+                        <input type="number" class="form-control" id="anchor_strength" name="anchor_strength" 
+                               step="0.1" min="1.0" max="10.0" value="2.0">
+                        <small class="form-text text-muted">Strength of anchor words (1.0 to 10.0)</small>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="significance_threshold">Significance Threshold</label>
+                        <input type="number" class="form-control" id="significance_threshold" name="significance_threshold" 
+                               step="0.01" min="0.0" max="1.0" value="0.05">
+                        <small class="form-text text-muted">Threshold for topic significance (0.0 to 1.0)</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Common Parameter -->
+                <div class="row mt-3">
                   <div class="col-md-6">
                     <div class="form-group">
                       <label for="max_iter">Maximum Iterations</label>
                       <input type="number" class="form-control" id="max_iter" name="max_iter" 
                              min="100" step="100" value="300">
                       <small class="form-text text-muted">Maximum number of iterations for the algorithm</small>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="form-group">
-                      <label for="init">Initialization Method</label>
-                      <select class="form-control" id="init" name="init">
-                        <option value="nndsvd">NNDSVD (Non-negative Double Singular Value Decomposition)</option>
-                        <option value="random">Random</option>
-                      </select>
-                      <small class="form-text text-muted">Method used to initialize the algorithm</small>
                     </div>
                   </div>
                 </div>
@@ -1185,6 +1234,31 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // Function to toggle method-specific parameters
+    function toggleMethodParams() {
+      const selectedMethod = document.getElementById('mode').value;
+      const allMethodParams = document.querySelectorAll('.method-params');
+      
+      // Hide all method-specific parameters first
+      allMethodParams.forEach(params => {
+        params.style.display = 'none';
+      });
+      
+      // Show parameters for selected method
+      const selectedParams = document.getElementById(`${selectedMethod}-params`);
+      if (selectedParams) {
+        selectedParams.style.display = 'block';
+      }
+    }
+
+    // Add event listener to method select
+    const methodSelect = document.getElementById('mode');
+    if (methodSelect) {
+      methodSelect.addEventListener('change', toggleMethodParams);
+      // Run once on page load to set initial state
+      toggleMethodParams();
+    }
+
     // Get all tab buttons
     const tabButtons = document.querySelectorAll('#analysisTabs button');
     
