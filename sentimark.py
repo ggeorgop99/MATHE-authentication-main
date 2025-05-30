@@ -99,7 +99,9 @@ def perform_sentiment_analysis(file_name):
 
         # Load lexicons
         print("Loading lexicons...")
-        with open("../finallexformysenti/EmotionLookupTable.txt", "r", encoding="utf-8") as file:
+        lexicon_dir = "finallexformysenti"  # Updated path
+        
+        with open(os.path.join(lexicon_dir, "EmotionLookupTable.txt"), "r", encoding="utf-8") as file:
             terms_list = file.read().splitlines()
 
         word = []  # arrays for word and score
@@ -113,7 +115,7 @@ def perform_sentiment_analysis(file_name):
             word[i] = clean_accent(word[i].lower())
 
         # Load emoticons
-        with open("../finallexformysenti/EmoticonLookupTable.txt", "r", encoding="utf-8") as file:
+        with open(os.path.join(lexicon_dir, "EmoticonLookupTable.txt"), "r", encoding="utf-8") as file:
             emotic_list = file.read().splitlines()
         emot = []
         scorem = []
@@ -123,7 +125,7 @@ def perform_sentiment_analysis(file_name):
             scorem.append(int(te[1]))
 
         # Load booster words
-        with open("../finallexformysenti/BoosterWordList.txt", "r", encoding="utf-8") as file:
+        with open(os.path.join(lexicon_dir, "BoosterWordList.txt"), "r", encoding="utf-8") as file:
             terms_listbo = file.read().splitlines()
         boost = []
         scorebo = []
@@ -135,7 +137,7 @@ def perform_sentiment_analysis(file_name):
             boost[i] = clean_accent(boost[i].lower())
 
         # Load negating words
-        with open("../finallexformysenti/NegatingWordList.txt", "r", encoding="utf-8") as file:
+        with open(os.path.join(lexicon_dir, "NegatingWordList.txt"), "r", encoding="utf-8") as file:
             terms_listneg = file.read().splitlines()
         neg = []
         for tn in terms_listneg:
@@ -229,7 +231,9 @@ def perform_sentiment_analysis(file_name):
                 prediction = 1
 
             # Calculate probability (normalized between 0 and 1)
-            probability = (sum_min_max + 1) / 2  # Normalize to [0,1] range
+            # First normalize sum_min_max to [-1,1] range
+            normalized_sum = max(-1, min(1, sum_min_max))
+            probability = (normalized_sum + 1) / 2  # Now this will always be in [0,1] range
 
             predictions.append(prediction)
             probabilities.append(probability)
@@ -309,6 +313,7 @@ def perform_sentiment_analysis(file_name):
         raise
 
 if __name__ == "__main__":
+    import argparse
     parser = argparse.ArgumentParser(description="Run the sentistrength algorithm for sentiment analysis.")
     parser.add_argument("--file_name", type=str, required=True, help="Name of file to analyze")
     args = parser.parse_args()

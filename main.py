@@ -252,30 +252,31 @@ def sentiment_analysis():
         
         logger.info(f"[SENTIMENT_ROUTE_DEBUG] Received filepath: '{filepath}' for model: {model_name}, method: {testing_method}")
 
-        # Validate uncertainty threshold (from your original code)
-        try:
-            uncertainty_threshold = float(request.form.get('uncertainty_threshold', 0.2))
-            if testing_method == 'mc':
-                if uncertainty_threshold < 0.05 or uncertainty_threshold > 0.5:
-                    flash('Uncertainty threshold must be between 0.05 and 0.5 (5% to 50%)', 'danger')
-                    return redirect(url_for('analyze')) # Or back to results page if possible
-        except ValueError:
-            flash('Invalid uncertainty threshold value', 'danger')
-            return redirect(url_for('analyze'))
+        # Validate uncertainty threshold only for neural models
+        if model_name != "sentistrength":
+            try:
+                uncertainty_threshold = float(request.form.get('uncertainty_threshold', 0.2))
+                if testing_method == 'mc':
+                    if uncertainty_threshold < 0.05 or uncertainty_threshold > 0.5:
+                        flash('Uncertainty threshold must be between 0.05 and 0.5 (5% to 50%)', 'danger')
+                        return redirect(url_for('analyze'))
+            except ValueError:
+                flash('Invalid uncertainty threshold value', 'danger')
+                return redirect(url_for('analyze'))
 
-        if not all([filepath, model_name, testing_method]):
+        if not all([filepath, model_name]):
             flash('Missing required parameters', 'danger')
             return redirect(url_for('analyze'))
 
-        # Get current analysis data for preprocessed_filepath check (from your original code)
-        current_file_data = get_or_create_analysis_results(filepath) 
+        # Get current analysis data for preprocessed_filepath check
+        current_file_data = get_or_create_analysis_results(filepath)
         
         if 'preprocessed_filepath' not in current_file_data or current_file_data['preprocessed_filepath'] is None:
-            original_upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filepath) # Original filename
+            original_upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filepath)
             if os.path.exists(original_upload_path):
                 preprocessed_file_actual_path = pp.preprocess_file(original_upload_path)
                 store_analysis_results(filepath, {'preprocessed_filepath': preprocessed_file_actual_path})
-                current_file_data['preprocessed_filepath'] = preprocessed_file_actual_path # Update in current scope
+                current_file_data['preprocessed_filepath'] = preprocessed_file_actual_path
             else:
                 flash('Original file not found. Please upload the file again.', 'danger')
                 return redirect(url_for('analyze'))
@@ -285,41 +286,41 @@ def sentiment_analysis():
         predictions_preview_data = []
 
         try:
-            # Run sentiment analysis (this is 'results' in your original code)
+            # Run sentiment analysis
             results_from_sp = sp.perform_sentiment_analysis(
-                file_name=os.path.splitext(filepath)[0], # Ensure this matches what sp expects
+                file_name=os.path.splitext(filepath)[0],
                 model_name=model_name,
-                testing_method=testing_method,
-                uncertainty_threshold=uncertainty_threshold
+                testing_method=testing_method if model_name != "sentistrength" else None,
+                uncertainty_threshold=uncertainty_threshold if model_name != "sentistrength" else None
             )
             
-            # Read the unpreprocessed predictions file for preview (from your original code)
+            # Read the unpreprocessed predictions file for preview
             if results_from_sp and 'file_paths' in results_from_sp and 'unpreprocessed_predictions' in results_from_sp['file_paths']:
                 try:
                     predictions_df = pd.read_csv(results_from_sp['file_paths']['unpreprocessed_predictions'])
                     predictions_preview_data = predictions_df.head(10).to_dict('records')
                 except Exception as e_pred_file:
                     logger.error(f"Error reading predictions file: {str(e_pred_file)}")
-                    predictions_preview_data = [] # Ensure it's an empty list on error
+                    predictions_preview_data = []
             else:
                 logger.warning("Predictions file path not found in sentiment analysis results.")
 
-        except Exception as e_sp: # Catch errors specifically from sentiment_prediction.py
+        except Exception as e_sp:
             logger.error(f"Error during sp.perform_sentiment_analysis or predictions_preview creation: {str(e_sp)}", exc_info=True)
-            if "InputLayer" in str(e_sp): # From your original specific error handling
+            if "InputLayer" in str(e_sp):
                 flash('Error: The sentiment model is incompatible with the current TensorFlow version. Please contact the administrator.', 'danger')
             else:
                 flash(f'Error performing sentiment analysis: {str(e_sp)}', 'danger')
-            return redirect(url_for('analyze')) # Or a more specific error page / back to results
+            return redirect(url_for('analyze'))
             
-        # Now store the results
+        # Store the results
         store_analysis_results(filepath, {
             'sentiment_results': results_from_sp,
             'predictions_preview': predictions_preview_data
         })
         
         # Get the complete, updated data for rendering
-        analysis_data_for_template = get_or_create_analysis_results(filepath) 
+        analysis_data_for_template = get_or_create_analysis_results(filepath)
         logger.info(f"[SENTIMENT_ROUTE_DEBUG] Final session data for '{filepath}' before rendering: {json.dumps(convert_to_serializable(analysis_data_for_template.copy()), indent=2)}")
         
         return render_template('analysis_results.html',
@@ -328,14 +329,13 @@ def sentiment_analysis():
                                preprocessed_csv=analysis_data_for_template.get('preprocessed_preview'),
                                column_info=analysis_data_for_template.get('column_info'),
                                summary_result=analysis_data_for_template.get('summary_result'),
-                               sentiment_results=analysis_data_for_template.get('sentiment_results'), # Use the newly fetched data
-                               results_topic_modelling=analysis_data_for_template.get('topic_modelling_results'), # This should be preserved
-                               predictions_preview=analysis_data_for_template.get('predictions_preview'), # Use the newly fetched data
+                               sentiment_results=analysis_data_for_template.get('sentiment_results'),
+                               results_topic_modelling=analysis_data_for_template.get('topic_modelling_results'),
+                               predictions_preview=analysis_data_for_template.get('predictions_preview'),
                                available_models=sp.AVAILABLE_MODELS,
                                testing_methods=sp.TESTING_METHODS,
                                active_tab='sentiment')
     except Exception as e:
-        # General exception handler for the route
         logger.error(f"Overall error in sentiment analysis route (filepath: {filepath}): {str(e)}", exc_info=True)
         flash(f'An unexpected error occurred in sentiment analysis: {str(e)}', 'danger')
         return redirect(url_for('analyze'))

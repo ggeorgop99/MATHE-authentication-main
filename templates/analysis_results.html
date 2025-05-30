@@ -1071,38 +1071,40 @@
               
               <div class="form-group">
                 <label for="model_name">Select Model</label>
-                <select class="form-control" id="model_name" name="model_name" required>
+                <select class="form-control" id="model_name" name="model_name" required onchange="toggleModelFields()">
                   {% for model in available_models %}
                   <option value="{{ model }}">{{ model }}</option>
                   {% endfor %}
                 </select>
               </div>
 
-              <div class="form-group">
-                <label for="testing_method">Testing Method</label>
-                <select class="form-control" id="testing_method" name="testing_method" required onchange="toggleUncertaintyThreshold()">
-                  {% for method in testing_methods %}
-                  <option value="{{ method }}">{{ method|upper }}</option>
-                  {% endfor %}
-                </select>
-              </div>
+              <div id="neural-model-fields" style="display: none;">
+                <div class="form-group">
+                  <label for="testing_method">Testing Method</label>
+                  <select class="form-control" id="testing_method" name="testing_method" onchange="toggleUncertaintyThreshold()">
+                    {% for method in testing_methods %}
+                    <option value="{{ method }}">{{ method|upper }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
 
-              <div class="form-group">
-                <label for="uncertainty_threshold">Uncertainty Threshold (for MC dropout)</label>
-                <input type="number" 
-                       class="form-control" 
-                       id="uncertainty_threshold" 
-                       name="uncertainty_threshold" 
-                       value="0.2" 
-                       step="0.05" 
-                       min="0.05" 
-                       max="0.5" 
-                       disabled>
-                <small class="form-text text-muted">
-                  This setting is only available when using MC dropout method. 
-                  Acceptable range: 0.05 to 0.5 (5% to 50% uncertainty).
-                  Higher values mean more conservative predictions.
-                </small>
+                <div class="form-group">
+                  <label for="uncertainty_threshold">Uncertainty Threshold (for MC dropout)</label>
+                  <input type="number" 
+                         class="form-control" 
+                         id="uncertainty_threshold" 
+                         name="uncertainty_threshold" 
+                         value="0.2" 
+                         step="0.05" 
+                         min="0.05" 
+                         max="0.5" 
+                         disabled>
+                  <small class="form-text text-muted">
+                    This setting is only available when using MC dropout method. 
+                    Acceptable range: 0.05 to 0.5 (5% to 50% uncertainty).
+                    Higher values mean more conservative predictions.
+                  </small>
+                </div>
               </div>
 
               <button type="submit" class="btn btn-primary">
@@ -1208,23 +1210,51 @@
 
 <!-- Add JavaScript for dynamic form control -->
 <script>
-  function toggleUncertaintyThreshold() {
-    const testingMethod = document.getElementById('testing_method').value;
-    const uncertaintyInput = document.getElementById('uncertainty_threshold');
+function toggleModelFields() {
+    const modelSelect = document.getElementById('model_name');
+    const neuralFields = document.getElementById('neural-model-fields');
+    const testingMethod = document.getElementById('testing_method');
+    const uncertaintyThreshold = document.getElementById('uncertainty_threshold');
     
-    if (testingMethod === 'mc') {
-      uncertaintyInput.disabled = false;
-      uncertaintyInput.style.opacity = '1';
-      uncertaintyInput.style.backgroundColor = '#fff';
+    if (modelSelect.value === 'sentistrength') {
+        neuralFields.style.display = 'none';
+        testingMethod.required = false;
+        uncertaintyThreshold.required = false;
     } else {
-      uncertaintyInput.disabled = true;
-      uncertaintyInput.style.opacity = '0.7';
-      uncertaintyInput.style.backgroundColor = '#f8f9fa';
+        neuralFields.style.display = 'block';
+        testingMethod.required = true;
+        if (testingMethod.value === 'mc') {
+            uncertaintyThreshold.required = true;
+        }
     }
-  }
+}
 
-  // Run on page load to set initial state
-  document.addEventListener('DOMContentLoaded', toggleUncertaintyThreshold);
+function toggleUncertaintyThreshold() {
+    const testingMethod = document.getElementById('testing_method');
+    const uncertaintyThreshold = document.getElementById('uncertainty_threshold');
+    
+    if (testingMethod.value === 'mc') {
+        uncertaintyThreshold.disabled = false;
+        uncertaintyThreshold.required = true;
+        uncertaintyThreshold.style.opacity = '1';
+        uncertaintyThreshold.style.backgroundColor = '#fff';
+        uncertaintyThreshold.style.color = '#000';
+        uncertaintyThreshold.style.borderColor = '#000';
+    } else {
+        uncertaintyThreshold.disabled = true;
+        uncertaintyThreshold.required = false;      
+        uncertaintyThreshold.style.opacity = '0.7';
+        uncertaintyThreshold.style.backgroundColor = '#f8f9fa';
+        uncertaintyThreshold.style.color = '#6c757d';
+        uncertaintyThreshold.style.borderColor = '#ced4da';
+    }
+}
+
+// Initialize fields on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleModelFields();
+    toggleUncertaintyThreshold();
+});
 </script>
 {% endblock %}
 

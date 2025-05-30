@@ -17,9 +17,11 @@ from sklearn.metrics import (
     classification_report,
 )
 import os
+import sentimark  # Import the sentimark module
 
 # Available models for UI dropdown
 AVAILABLE_MODELS = [
+    "sentistrength",  # Add sentistrength as an option
     "pharmSpellchecked",
     "pharm_translated_greek_spellchecked",
     "datasetSpellchecked_TL_On_pharmSpellchecked",
@@ -232,10 +234,14 @@ def perform_sentiment_analysis(file_name, model_name, testing_method="mc", uncer
         if model_name not in AVAILABLE_MODELS:
             raise ValueError(f"Invalid model name. Must be one of: {AVAILABLE_MODELS}")
         
-        if testing_method not in TESTING_METHODS:
+        if testing_method not in TESTING_METHODS and model_name != "sentistrength":
             raise ValueError(f"Invalid testing method. Must be one of: {TESTING_METHODS}")
 
-        # Setup paths
+        # If using sentistrength, call its analysis function
+        if model_name == "sentistrength":
+            return sentimark.perform_sentiment_analysis(file_name)
+
+        # Setup paths for neural models
         dir_path = f"savedmodel_bin/{model_name}_model"
         model_path = f"{dir_path}/{model_name}_bin.keras"
         vectorizer_path = f"{dir_path}/count_vectorizer_{model_name}_bin.pkl"
