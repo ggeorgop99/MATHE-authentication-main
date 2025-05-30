@@ -1,91 +1,13 @@
-# IMPORTANT for cyhunspell (ubuntu-wsl):
-# gotta get the greek dictionaries and put them in the hunspell dics
-# in this location ~/.local/lib/python3.10/site-packages/hunspell/dictionaries
-# and from terminal do "nautilus ." to open it in GUI and copy-paste dics
-# required for cyhunspell (ubuntu-wsl)
-# apt install -y  autoconf libtool  gettext autopoint
-# pip install https://github.com/MSeal/cython_hunspell/archive/refs/tags/2.0.3.tar.gz
-
-from sentistrength import PySentiStr
 import pandas as pd
+import numpy as np
 import csv
-from itertools import zip_longest
 from difflib import SequenceMatcher
-# from hunspell import Hunspell
-
-import argparse
 import os
-
-
-def clearfiles():
-    data = pd.read_csv(dataset_path, encoding="utf-8")
-
-    data = data.drop("topic", axis=1)
-    data = data.drop("title", axis=1)
-
-    data = data.dropna()
-    data = data.drop_duplicates(subset=["comment"], keep="first")
-    temp = []
-    temp = data["stars"].values.tolist()
-
-    file_name = file_name.replace("dirty", "")
-    dataset_path = f"../neuralnet/preprocessed_datasets/{file_name}_{mode}.csv"
-
-    if mode == "bin":
-        for i in range(0, len(data["stars"])):
-
-            if int(temp[i]) <= 3:
-                temp[i] = 0
-            else:
-                temp[i] = 1
-
-    else:
-        for i in range(0, len(data["stars"])):
-
-            if int(temp[i]) <= 2:
-                temp[i] = -1
-            elif int(temp[i]) == 3:
-                temp[i] = 0
-            else:
-                temp[i] = 1
-    data["stars"] = temp
-
-    cols = data.columns.tolist()
-    cols = cols[-1:] + cols[:-1]
-    data = data[cols]
-
-    data.to_csv(
-        dataset_path,
-        header=["reviews", "sentiment"],
-        index=False,
-        encoding="utf-8",
-    )
-
-    return file_name, dataset_path
-
-
-def splitfiles():
-    data = pd.read_csv(dataset_path, encoding="utf-8")
-
-    stars_path = f"{dir_path}/{file_name}_stars_{mode}.csv"
-    reviews_path = f"{dir_path}/{file_name}_reviews_{mode}.csv"
-
-    data["sentiment"].to_csv(stars_path, header=["sentiment"], index=False)
-
-    data["reviews"].to_csv(
-        reviews_path,
-        header=["reviews"],
-        index=False,
-        encoding="utf-8",
-    )
-
-    return stars_path, reviews_path
-
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 def clean_accent(text):
-
     t = text
-
     # el
     t = t.replace("Ά", "Α")
     t = t.replace("Έ", "Ε")
@@ -105,353 +27,291 @@ def clean_accent(text):
     t = t.replace("♡", "")
     t = t.replace("☆", "")
     t = t.replace("*", "")
-
     return t
 
+def plot_sentiment_distribution(predictions, file_name, results_dir):
+    """Plot the distribution of predicted sentiments."""
+    unique_sentiments, counts = np.unique(predictions, return_counts=True)
+    sns.set_theme(style="whitegrid")
+    plt.figure(figsize=(16, 10))
+    ax = sns.barplot(x=unique_sentiments, y=counts, palette="viridis")
+    plt.title("Distribution of Predicted Sentiments", fontsize=20)
+    plt.xlabel("Sentiment", fontsize=16)
+    plt.ylabel("Count", fontsize=16)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    for i, count in enumerate(counts):
+        ax.text(i, count, str(count), ha="center", va="bottom", fontsize=14)
 
-def zerolistmaker(n):
-    listofzeros = [0] * n
-    return listofzeros
+    plot_filename = f"sentiment_plots/{file_name}_sentiment_distribution.png"
+    plot_path = f"static/{plot_filename}"
+    os.makedirs(os.path.dirname(plot_path), exist_ok=True)
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    return plot_filename
 
+def plot_predicted_probabilities(probabilities, results_dir):
+    """Plot the distribution of predicted probabilities."""
+    plt.figure(figsize=(16, 10))
+    plt.hist(probabilities, bins=50, alpha=0.75, color="blue", label="Predicted probabilities")
+    plt.axvline(0.5, color="red", linestyle="dashed", linewidth=2, label="Threshold = 0.5")
+    plt.title("Distribution of Predicted Probabilities", fontsize=20)
+    plt.xlabel("Predicted Probability", fontsize=16)
+    plt.ylabel("Frequency", fontsize=16)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.legend(fontsize=14)
+    
+    plot_filename = "sentiment_plots/predicted_probabilities.png"
+    plot_path = f"static/{plot_filename}"
+    os.makedirs(os.path.dirname(plot_path), exist_ok=True)
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    return plot_filename
 
-# Define command-line arguments
-parser = argparse.ArgumentParser(
-    description="Run the sentimark algorithm to detect sentiment in greek text."
-)
-parser.add_argument(
-    "--mode",
-    type=str,
-    required=True,
-    choices=["bin", "nonbin"],
-    help="Mode of the analysis: nonbin or bin",
-)
-parser.add_argument(
-    "--file_name", type=str, required=True, help="Name of file to preprocess"
-)
-args = parser.parse_args()
+def perform_sentiment_analysis(file_name):
+    """
+    Main function to perform sentiment analysis using the sentistrength algorithm.
+    
+    Args:
+        file_name (str): Name of the input file (without extension)
+    
+    Returns:
+        dict: Dictionary containing analysis results and paths to generated files
+    """
+    try:
+        # Setup paths
+        results_dir = f"savedmodel_bin/sentistrength/{file_name}_results"
+        os.makedirs(results_dir, exist_ok=True)
 
-# Access the mode arguments
-mode = args.mode
-file_name = args.file_name
-dataset_path = f"../neuralnet/preprocessed_datasets/{file_name}_{mode}.csv"
+        # Load both preprocessed and original data
+        print("Loading data...")
+        preprocessed_dataset_path = f"files/temp/{file_name}_preprocessed.csv"
+        original_dataset_path = f"files/temp/{file_name}.csv"
+        
+        # Load preprocessed data for prediction
+        df_preprocessed = pd.read_csv(preprocessed_dataset_path)
+        X_test = df_preprocessed.iloc[:, 0].values  # Get the first column (preprocessed text)
 
-# Hunspell check
-# h = Hunspell("el_GR")
-# if not a new .csv is downloaded and in folder
-# clear it and fix it
-if "dirty" in file_name:
-    file_name, dataset_path = clearfiles()
-    print("Cleared")
+        # Load original data for reference
+        df_original = pd.read_csv(original_dataset_path)
+        original_texts = df_original.iloc[:, 0].values  # Get the first column (original text)
 
-# Create directories
-dir_path = f"{file_name}_{mode}"
-os.makedirs(dir_path, exist_ok=True)
+        # Load lexicons
+        print("Loading lexicons...")
+        with open("../finallexformysenti/EmotionLookupTable.txt", "r", encoding="utf-8") as file:
+            terms_list = file.read().splitlines()
 
-# run split to have both reviews and stars .csv
-stars_path, reviews_path = splitfiles()
+        word = []  # arrays for word and score
+        score = []
+        for t in terms_list:
+            t = t.split("\t")
+            word.append(t[0])
+            score.append(int(t[1]))
 
-with open(reviews_path, newline="\n", encoding="utf-8") as f:
-    df = csv.reader(f)
-    df = list(df)
-    df = list(filter(None, df))  # list of reviews with no duplicates
+        for i in range(len(word)):
+            word[i] = clean_accent(word[i].lower())
 
-with open(stars_path, newline="\n") as g:
-    stt = []
-    for row in csv.reader(g, delimiter=";"):
+        # Load emoticons
+        with open("../finallexformysenti/EmoticonLookupTable.txt", "r", encoding="utf-8") as file:
+            emotic_list = file.read().splitlines()
+        emot = []
+        scorem = []
+        for te in emotic_list:
+            te = te.split("\t")
+            emot.append(te[0])
+            scorem.append(int(te[1]))
 
-        stt.append(row[0])  # stars array
+        # Load booster words
+        with open("../finallexformysenti/BoosterWordList.txt", "r", encoding="utf-8") as file:
+            terms_listbo = file.read().splitlines()
+        boost = []
+        scorebo = []
+        for tb in terms_listbo:
+            tb = tb.split("\t")
+            boost.append(tb[0])
+            scorebo.append(int(tb[1]))
+        for i in range(len(boost)):
+            boost[i] = clean_accent(boost[i].lower())
 
-# pharm lexicon
-with open(
-    "../finallexformysenti/EmotionLookupTable.txt", "r", encoding="utf-8"
-) as file:
-    terms_list = file.read().splitlines()
+        # Load negating words
+        with open("../finallexformysenti/NegatingWordList.txt", "r", encoding="utf-8") as file:
+            terms_listneg = file.read().splitlines()
+        neg = []
+        for tn in terms_listneg:
+            tn = tn.split("\t")
+            neg.append(tn[0])
+        for i in range(len(neg)):
+            neg[i] = clean_accent(neg[i].lower())
 
-word = []  # 2 arrays for word and score
-score = []
+        # Constants
+        suffix_prune_el = 3
+        string_min_score = 0.76
+        stikshh = [".", " ", "-", "_", "+", "w", "°", "?", ";", "!", ":", "(", ")"]
+        stiksh = [".", " ", "-", "_", "+", "w", "°", "?", ";", "!", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
-for t in terms_list:
-    t = t.split("	")
-    word.append(t[0])
-    score.append(t[1])
+        # Initialize results arrays
+        predictions = []
+        probabilities = []
+        checked_words = 0
+        total_words = 0
 
-for i in range(0, len(score)):
-    score[i] = int(score[i])  # make int from string
+        print("Making predictions...")
+        for review in X_test:
+            review = review.replace("\n", "")
+            rvwords = review.split(" ")
+            review_score = 0
+            min_score = -1
+            max_score = 1
+            flag = False
 
-for i in range(0, len(word)):
-    word[i] = clean_accent(word[i].lower())  # clean accent of word
+            for words in rvwords:
+                sr = 0
+                total_words += 1
+                words = clean_accent(words)
 
+                # Check for emoticons
+                if words in emot:
+                    checked_words += 1
+                    sr = scorem[emot.index(words)]
+                    review_score += sr
+                else:
+                    # Handle punctuation
+                    a = [""]
+                    if "!" in words:
+                        a = words.split("!")
 
-# emoticontable same as pharm
-with open(
-    "../finallexformysenti/EmoticonLookupTable.txt", "r", encoding="utf-8"
-) as file:
-    emotic_list = file.read().splitlines()
-emot = []
-scorem = []
-for te in emotic_list:
-    te = te.split("	")
-    emot.append(te[0])
-    scorem.append(te[1])
-for i in range(0, len(scorem)):
-    scorem[i] = int(scorem[i])
+                    # Clean unwanted characters
+                    for p in range(len(words)):
+                        if words[p:p+1] in stikshh:
+                            words = words.replace(words[p:p+1], "")
+                            words = words.replace(".", "")
 
+                    # Check for negating words
+                    if words in neg:
+                        checked_words += 1
+                        flag = True
 
-# boosterwords same as before
-with open("../finallexformysenti/BoosterWordList.txt", "r", encoding="utf-8") as file:
-    terms_listbo = file.read().splitlines()
+                    # Check main lexicon
+                    for wrd in [m for m in word if m.lower().startswith(words[:1])]:
+                        match = words.find(wrd[:max(3, len(wrd) - suffix_prune_el)])
+                        scorera = SequenceMatcher(None, words, wrd).ratio()
+                        if match == 0 and scorera > string_min_score:
+                            checked_words += 1
+                            if flag:
+                                flag = False
+                            else:
+                                sr = score[word.index(wrd)]
+                                if a[0] != "":
+                                    if sr == -1:
+                                        sr = 2
+                                    else:
+                                        sr += 1
+                                review_score += sr
 
-boost = []
-scorebo = []
+                    # Check booster words
+                    if words in boost:
+                        checked_words += 1
+                        sr = scorebo[boost.index(words)]
+                        review_score += sr
 
-for tb in terms_listbo:
-    tb = tb.split("	")
-    boost.append(tb[0])
-    scorebo.append(tb[1])
-for i in range(0, len(scorebo)):
-    scorebo[i] = int(scorebo[i])
-for i in range(0, len(boost)):
-    boost[i] = clean_accent(boost[i].lower())
+                # Update min/max scores
+                if sr > max_score:
+                    max_score = sr
+                if sr < min_score:
+                    min_score = sr
 
-# negwords
-with open("../finallexformysenti/NegatingWordList.txt", "r", encoding="utf-8") as file:
-    terms_listneg = file.read().splitlines()
-neg = []
-for tn in terms_listneg:
-    tn = tn.split("	")
-    neg.append(tn[0])
-for i in range(0, len(neg)):
-    neg[i] = clean_accent(neg[i].lower())
-
-
-# Constants declarations
-suffix_prune_el = 3  # prune in words
-string_min_score = 0.76  # matching score
-checkedWords = 0  # number of words that were checked
-totalWords = 0  # sum of words
-
-
-scorerev = [0]  # score per review
-mins = [-1]  # min score per review
-maxs = [1]  # max score per review
-i = 0  # an i
-stikshh = [
-    ".",
-    " ",
-    "-",
-    "_",
-    "+",
-    "w",
-    "°",
-    "?",
-    ";",
-    "!",
-    ":",
-    "(",
-    ")",
-]  # unwanted chars
-stiksh = [
-    ".",
-    " ",
-    "-",
-    "_",
-    "+",
-    "w",
-    "°",
-    "?",
-    ";",
-    "!",
-    "0",
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-]  # unwanted chars that may repeat
-summinmax = [0]
-mysenti_predictions_path = f"{dir_path}/mysenti_{file_name}_{mode}.csv"
-with open(
-    mysenti_predictions_path, "w", newline="", encoding="utf8"
-) as f:  # results csv
-    writer = csv.writer(f, delimiter=",")
-    writer.writerow(("review", "mysentiment", "min", "max", "sentiment"))  # row titles
-    for review in df:  # every review
-
-        review = [
-            x.replace("\n", "") for x in review
-        ]  # bgazw to /n pou ebale to opencsv
-
-        flag = False  # kathe review arxikopoiw false. An ginei true meta h epomenh leksh pou brisketai den metrietai
-
-        rvwords = review[0].split(" ")  # kathe leksh pou exei to review
-
-        rvwords = list(rvwords)  # list
-
-        for words in rvwords:
-            sr = 0  # sr start every word
-            totalWords = totalWords + 1  # count words
-            words = clean_accent(words)  # clean accent of word
-
-            # emoticon first before any stiksh split so not to lose
-            if words in emot:
-                checkedWords = checkedWords + 1  # word find counter
-                sr = scorem[emot.index(words)]
-                scorerev[i] = scorerev[i] + sr  # if found adds score to review score
+            # Calculate final prediction
+            sum_min_max = max_score + min_score
+            if sum_min_max <= 0:
+                prediction = 0
             else:
+                prediction = 1
 
-                # punctuation if no emoticon found
+            # Calculate probability (normalized between 0 and 1)
+            probability = (sum_min_max + 1) / 2  # Normalize to [0,1] range
 
-                a = [""]  # starts a dummy array to see if there is a !
-                if "!" in words:
-                    a = words.split(
-                        "!"
-                    )  # word is spliting from !. After this algorithm
-                    # cant find ! and word remains the same without !
-                    # so I can add word's score with ! boost
+            predictions.append(prediction)
+            probabilities.append(probability)
 
-                for p in range(0, len(words)):
-                    if (
-                        words[p : p + 1] in stikshh
-                    ):  # replacing every weird char with '' so word can be clear
-                        words = words.replace(words[p : p + 1], "")
-                        words = words.replace(".", "")
+        # Convert to numpy arrays
+        predictions = np.array(predictions)
+        probabilities = np.array(probabilities)
 
-                # threepeat letters checker and hunspell sugestion after removing them.
-                # Tested and gives good suggestions. Check also that word is not a punctuation or number
-                k = [""]
-                for p in range(3, len(words)):
+        # Calculate sentiment distribution
+        total_texts = len(predictions)
+        positive_count = np.sum(predictions == 1)
+        negative_count = np.sum(predictions == 0)
+        positive_percentage = (positive_count / total_texts) * 100
+        negative_percentage = (negative_count / total_texts) * 100
 
-                    if words[p - 1 : p] == words[p - 2 : p - 1] == words[
-                        p - 3 : p - 2
-                    ] and (words[p - 1 : p] not in stiksh):
-                        words = "".join(sorted(set(words), key=words.index))
-                        # print(words)
+        # Create predictions DataFrame
+        predictions_df = pd.DataFrame({
+            'original_text': original_texts,
+            'preprocessed_text': X_test,
+            'predicted_sentiment': predictions,
+            'prediction_probability': probabilities
+        })
+        
+        # Add sentiment labels
+        predictions_df['sentiment_label'] = predictions_df['predicted_sentiment'].map({1: 'Positive', 0: 'Negative'})
+        
+        # Add summary statistics
+        if len(predictions_df) > 0:
+            predictions_df.loc[0, 'positive_texts_count'] = positive_count
+            predictions_df.loc[0, 'negative_texts_count'] = negative_count
+            predictions_df.loc[0, 'total_texts'] = total_texts
+            predictions_df.loc[0, 'positive_percentage'] = positive_percentage
+            predictions_df.loc[0, 'negative_percentage'] = negative_percentage
+            predictions_df.loc[0, 'words_found_ratio'] = checked_words / total_words if total_words > 0 else 0
 
-                        # k = h.suggest(words)
-                        # if k != ():
-                        #     words = k[0]
-                        # break
+        # Save predictions
+        # Create and save predictions with preprocessed text
+        preprocessed_predictions_df = predictions_df.copy()
+        preprocessed_predictions_df['text'] = preprocessed_predictions_df['preprocessed_text']
+        preprocessed_predictions_df = preprocessed_predictions_df.drop(['original_text', 'preprocessed_text'], axis=1)
+        preprocessed_output_path = f"{results_dir}/{file_name}_preprocessed_predictions.csv"
+        preprocessed_predictions_df.to_csv(preprocessed_output_path, index=False)
 
-                # Negative word check. If found flag=True and next word emotion skipped
-                if words in neg:
-                    checkedWords = checkedWords + 1
-                    flag = True
+        # Create and save predictions with unpreprocessed text
+        unpreprocessed_predictions_df = predictions_df.copy()
+        unpreprocessed_predictions_df['text'] = unpreprocessed_predictions_df['original_text']
+        unpreprocessed_predictions_df = unpreprocessed_predictions_df.drop(['original_text', 'preprocessed_text'], axis=1)
+        unpreprocessed_output_path = f"{results_dir}/{file_name}_unpreprocessed_predictions.csv"
+        unpreprocessed_predictions_df.to_csv(unpreprocessed_output_path, index=False)
 
-                # main list check and scoring
-                # get words that start with the first letter of word that we check
-                # saves A LOT of time
-                for wrd in [m for m in word if m.lower().startswith(words[:1])]:
-                    match = words.find(
-                        wrd[: max(3, len(wrd) - suffix_prune_el)]
-                    )  # match word with pruning
-                    scorera = SequenceMatcher(
-                        None, words, wrd
-                    ).ratio()  # ratio of final matching
-                    if match == 0 and scorera > string_min_score:  # match and ratio>
-                        checkedWords = checkedWords + 1  # word counter
-                        if flag == True:
-                            flag = False  # if flag=True do it false and stop
-                        else:
-                            sr = score[word.index(wrd)]  # found score of word
-                            if a[0] != "":  # If ! found
-                                if sr == -1:  # score of word from -1->2
-                                    sr = 2
-                                else:
-                                    sr = sr + 1  # other score of word +1
+        # Generate plots
+        sentiment_dist_path = plot_sentiment_distribution(predictions, file_name, results_dir)
+        probability_dist_path = plot_predicted_probabilities(probabilities, results_dir)
 
-                            scorerev[i] = scorerev[i] + sr  # sum score of review
-                # if words in boost add in score
-                if words in boost:
-                    checkedWords = checkedWords + 1  # word counter
-                    sr = scorebo[boost.index(words)]
-                    scorerev[i] = scorerev[i] + sr
-            # check for max review score	until this word in every case se is the added score
-            # from word
-            if sr > maxs[i]:
-                maxs[i] = sr
-            # check for min review score	until this word
-            if sr < mins[i]:
-                mins[i] = sr
+        # Prepare results dictionary
+        results = {
+            'summary': {
+                'positive_count': int(positive_count),
+                'negative_count': int(negative_count),
+                'total_texts': int(total_texts),
+                'positive_percentage': float(positive_percentage),
+                'negative_percentage': float(negative_percentage),
+                'words_found_ratio': float(checked_words / total_words) if total_words > 0 else 0
+            },
+            'file_paths': {
+                'preprocessed_predictions': preprocessed_output_path,
+                'unpreprocessed_predictions': unpreprocessed_output_path,
+                'sentiment_distribution': sentiment_dist_path,
+                'probability_distribution': probability_dist_path
+            }
+        }
 
-        # add min and max to produce the final score and label
-        # -1 if neg, 0 if neutr, 1 if positive
-        summinmax[i] = maxs[i] + mins[i]
-        if summinmax[i] <= 0:
-            summinmax[i] = 0
+        return results
 
-        # elif -1 <summinmax[i]<1:
+    except Exception as e:
+        print(f"Error in sentiment analysis: {str(e)}")
+        raise
 
-        # 	summinmax[i]=0
-        else:
-            summinmax[i] = 1
-
-        i = i + 1
-        summinmax.append(0)
-        scorerev.append(0)
-        mins.append(-1)
-        maxs.append(1)
-
-    print(
-        "Words found in lexicon: ", checkedWords, " Total words: ", totalWords
-    )  # words found,total words
-    ratio = checkedWords / totalWords
-    print("\n Ratio: ", ratio)  # ratio found
-
-    t = [df, summinmax, mins, maxs, stt]  # exported data
-    export_data = zip_longest(*t)  # zip and write
-    writer.writerows(export_data)
-
-# Prediction accuracy
-df = pd.read_csv(mysenti_predictions_path)
-
-res = []
-sent = []
-
-sent = df["sentiment"]
-res = df["mysentiment"]
-
-cnt = 0
-for i in range(1, len(res) - 1):
-    if int(res[i]) == int(sent[i]):
-        cnt = cnt + 1
-
-accuracy = cnt / len(summinmax) * 100
-print("Correct Predicted: ", cnt, " = ", accuracy, "%")
-
-# CSV file to save results
-results_csv_path = "results.csv"
-
-# Initialize results DataFrame if the file doesn't exist
-if not os.path.exists(results_csv_path):
-    results_df = pd.DataFrame(
-        columns=[
-            "Dataset",
-            "Accuracy",
-            "Percentage of words found in lexicon",
-            "Total Words",
-            "Words Found",
-            "Correct Predicted",
-            "Total Predicted",
-        ]
-    )
-    results_df.to_csv(results_csv_path, index=False)
-
-# Save model results to a CSV
-results = {
-    "Model Name": f"{file_name}_{mode}",
-    "Accuracy": accuracy / 100,
-    "Percentage of words found in lexicon": ratio,
-    "Total Words": totalWords,
-    "Words Found": checkedWords,
-    "Correct Predicted": cnt,
-    "Total Predicted": len(summinmax),
-}
-
-results_df = pd.DataFrame([results])
-results_df.to_csv(
-    results_csv_path, mode="a", header=False, index=False
-)  # Append results
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run the sentistrength algorithm for sentiment analysis.")
+    parser.add_argument("--file_name", type=str, required=True, help="Name of file to analyze")
+    args = parser.parse_args()
+    
+    results = perform_sentiment_analysis(args.file_name)
+    print("\nAnalysis Results:", results)
