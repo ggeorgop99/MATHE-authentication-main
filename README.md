@@ -222,7 +222,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Greek language processing tools and resources
 - Open-source ML libraries and frameworks
 - Contributors and maintainers of the project
-- The [ML-techniques repository](https://github.com/yourusername/ML-techniques-on-journalistic-content-emotional-classification-and-annotation) for providing the trained models
+- The [ML-techniques repository](https://github.com/ggeorgop99/ML-techniques-on-journalistic-content-emotional-classification-and-annotation) for providing the trained models
 
 ## Contact
 
