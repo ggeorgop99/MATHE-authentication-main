@@ -2,54 +2,87 @@
 
 A Flask-based web application for topic modeling, sentiment analysis, and text processing with a focus on Greek language content. This project integrates various machine learning techniques for analyzing journalistic content, including emotional classification and annotation.
 
-## Related Projects
+## Important Note: System Requirements
 
-This project works in conjunction with the [ML-techniques-on-journalistic-content-emotional-classification-and-annotation](https://github.com/yourusername/ML-techniques-on-journalistic-content-emotional-classification-and-annotation) repository, which handles:
-- Training of sentiment analysis models
-- Model development and optimization
-- Dataset preparation and preprocessing
-- Model evaluation and validation
-
-The models trained in that repository are then used by this web application for real-time sentiment analysis and text processing.
+**This project requires Linux (Ubuntu recommended) or WSL (Windows Subsystem for Linux) to run properly.** The Hunspell dependency used for text processing is not supported on native Windows systems. Please ensure you are using one of the following:
+- Ubuntu 20.04 LTS or higher
+- WSL2 with Ubuntu distribution
+- Other Linux distributions with Hunspell support
 
 ## Features
 
-- **Topic Modeling**: Analyze and extract topics from text data using NMF and LDA
-- **Sentiment Analysis**: Process and analyze sentiment in Greek text using pre-trained models
-- **Text Summarization**: Generate summaries of long-form content
-- **File Processing**: Handle CSV file uploads and processing
-- **Content Annotation**: Annotate audio/video files with tampering detection
-- **Greek Language Support**: Specialized processing for Greek text content
-- **Contribution System**:
-  - Upload labeled Greek text datasets
-  - Participate in sentiment annotation
-  - Help improve model accuracy through crowd-sourcing
+### Text Analysis
+- **Topic Modeling**: 
+  - Extract and analyze topics from text data using NMF and LDA
+  - Generate word clouds for topic visualization
+  - Support for Greek language content
+  - Interactive topic exploration
+
+- **Sentiment Analysis**:
+  - Real-time sentiment prediction for Greek text
+  - Custom sentiment lexicons
+  - Neural network-based classification
+  - Support for multiple sentiment categories
+  - Batch processing capabilities
+
+- **Text Summarization**:
+  - Extractive summarization for Greek content
+  - Customizable summary length
+  - Support for multiple documents
+  - Quality metrics for summaries
+
+### File Processing
+- CSV file upload and processing
+- Support for various text formats
+- Batch processing capabilities
+- Temporary file management
+- Secure file handling
+
+### Data Management
+- Dataset organization and storage
+- Annotation management
+- Results visualization
+- Export capabilities
 
 ## Project Structure
 
 ```
-MATHE-authentication-main/
-├── data/
-│   ├── datasets/          # Uploaded CSV datasets
-│   └── annotations/       # Annotations data
-├── files/
-│   └── temp/             # Temporary storage for uploaded files
-├── static/
-│   ├── css/              # Stylesheets
-│   ├── js/               # JavaScript files
-│   └── wordclouds/       # Generated word cloud images
-├── templates/
-│   ├── base.html         # Base template with common elements
-│   ├── home.html         # Landing page
-│   ├── analyze.html      # File upload and analysis page
-│   ├── analysis_results.html  # Results display page
-│   ├── about.html        # About page
-│   └── contact.html      # Contact page
-├── main.py               # Main Flask application
-├── csv_handler.py        # CSV file processing utilities
-├── text_processing.py    # Text processing and word cloud generation
-├── topic_modelling.py    # Topic modeling implementation
-└── requirements.txt      # Python dependencies
+MATHE-authentication/
+├── main.py                    # Main Flask application
+├── topic_modelling.py         # Topic modeling implementation
+├── sentiment_prediction.py    # Sentiment analysis implementation
+├── summarization.py          # Text summarization implementation
+├── preprocessing.py          # Text preprocessing utilities
+├── text_processing.py        # General text processing functions
+├── csv_handler.py            # CSV file processing utilities
+├── sentimark.py              # Sentiment marking utilities
+│
+├── data/                     # Data directory
+│   ├── datasets/            # Training and test datasets
+│   └── annotations/         # Annotation files
+│
+├── static/                   # Static files
+│   ├── css/                 # Stylesheets
+│   ├── js/                  # JavaScript files
+│   └── wordclouds/          # Generated word cloud images
+│
+├── templates/               # HTML templates
+│   ├── base.html           # Base template
+│   ├── home.html           # Landing page
+│   ├── analyze.html        # Analysis interface
+│   └── results.html        # Results display
+│
+├── savedmodel_bin/         # Saved ML models
+├── finallexformysenti/     # Sentiment lexicons
+├── output_topics/          # Topic modeling outputs
+├── summaries/              # Generated summaries
+├── files/                  # Temporary file storage
+│   └── temp/              # Temporary files
+│
+├── stopwords.txt           # Stopwords list
+├── stopwords_greek.csv     # Greek stopwords
+├── requirements.txt        # Python dependencies
+└── README.md              # Project documentation
 ```
 
 ## Prerequisites
@@ -62,6 +95,7 @@ MATHE-authentication-main/
 - matplotlib
 - WordCloud
 - Keras (for neural network models)
+- Hunspell (system-level dependency)
 
 ## Installation
 
@@ -75,83 +109,94 @@ cd MATHE-authentication
 git clone https://github.com/yourusername/ML-techniques-on-journalistic-content-emotional-classification-and-annotation.git
 ```
 
-2. Install required packages:
+2. Install system dependencies (Linux/WSL only):
+```bash
+sudo apt-get update
+sudo apt-get install hunspell
+```
+
+3. Install required Python packages:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Download required language models:
+4. Download required language models:
 ```bash
 python -m spacy download el_core_news_md
 ```
 
-4. Set up pre-trained models:
+5. Set up pre-trained models:
    - Copy the trained models from the ML-techniques repository to the appropriate directories in this project
    - Ensure model paths are correctly configured in the application
 
-5. Create required directories:
+6. Create required directories:
 ```bash
 mkdir -p data/datasets data/annotations
 ```
 
 ## Usage
 
-1. Start the Flask application:
+### Starting the Application
 ```bash
 python main.py
 ```
+Access the web interface at `http://localhost:5000`
 
-2. Access the web interface at `http://localhost:5000`
+### Main Features
 
-3. Main features:
-   - Upload CSV files for topic modeling
-   - Analyze text sentiment using pre-trained models
-   - Generate text summaries
-   - Annotate audio/video content
-   - View topic modeling results and visualizations
-   - Contribute labeled datasets
-   - Participate in sentiment annotation
+1. **Topic Modeling**
+   - Upload text data in CSV format
+   - Select number of topics
+   - Choose between NMF and LDA algorithms
+   - View topic distributions and word clouds
+   - Export results
+
+2. **Sentiment Analysis**
+   - Input text for real-time analysis
+   - Batch process multiple texts
+   - View sentiment scores and categories
+   - Export analysis results
+
+3. **Text Summarization**
+   - Input text for summarization
+   - Adjust summary length
+   - View and compare summaries
+   - Export generated summaries
+
+4. **File Management**
+   - Upload and process CSV files
+   - Manage temporary files
+   - Export processed results
+   - View processing history
 
 ## API Endpoints
 
 - `/`: Home page
 - `/analyze`: Text analysis interface
 - `/topic_modelling`: Topic modeling analysis
-- `/contribute`: Content annotation and dataset contribution interface
-- `/about`: About page
-- `/contact`: Contact information
-- `/files/<filename>`: File download endpoint
-- `/api/next-text`: Get next text for sentiment annotation
-- `/contribute/dataset`: Upload labeled dataset
-- `/contribute/annotate`: Submit sentiment annotation
+- `/sentiment`: Sentiment analysis
+- `/summarize`: Text summarization
+- `/files/<filename>`: File download
+- `/api/next-text`: Get next text for analysis
+- `/api/process`: Process text data
+- `/api/export`: Export results
 
-## ML Components
+## Troubleshooting
 
-### Topic Modeling
-- Implements both NMF and LDA algorithms
-- Supports Greek language processing
-- Generates word clouds for visualization
+### Common Issues
 
-### Sentiment Analysis
-- Uses pre-trained models from the [ML-techniques repository](https://github.com/yourusername/ML-techniques-on-journalistic-content-emotional-classification-and-annotation)
-- Greek language sentiment analysis
-- Custom sentiment lexicons
-- Neural network-based classification
-- Real-time sentiment prediction
-- Crowd-sourced annotation system
+1. **Hunspell not found**
+   - Ensure you're running on Linux or WSL
+   - Verify Hunspell is installed: `hunspell --version`
+   - Install Hunspell if missing: `sudo apt-get install hunspell`
 
-### Text Summarization
-- Extractive summarization techniques
-- Support for Greek language content
+2. **Python package installation issues**
+   - Make sure you're using the correct Python version
+   - Try updating pip: `pip install --upgrade pip`
 
-## Model Management
-
-The sentiment analysis models used in this application are trained and maintained in a separate repository. To update the models:
-
-1. Train new models in the [ML-techniques repository](https://github.com/yourusername/ML-techniques-on-journalistic-content-emotional-classification-and-annotation)
-2. Export the trained models
-3. Update the models in this application's model directory
-4. Update any model configuration files if necessary
+3. **Environment variables not loading**
+   - Check if .env file exists and is properly formatted
+   - Verify environment variables are being loaded in the application
 
 ## Contributing
 
@@ -167,13 +212,6 @@ The sentiment analysis models used in this application are trained and maintaine
 2. Visit the Contribute page
 3. Upload your dataset with a description and license
 4. Your dataset will be used to improve the platform's models
-
-### Sentiment Annotation
-1. Visit the Contribute page
-2. Read the presented Greek text
-3. Select the sentiment (Positive/Negative)
-4. Add optional comments
-5. Submit your annotation
 
 ## License
 

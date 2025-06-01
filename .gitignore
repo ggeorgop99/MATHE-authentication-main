@@ -24,12 +24,15 @@ wheels/
 venv/
 ENV/
 env/
+.venv/
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
+*.sublime-workspace
+*.sublime-project
 
 # Project specific
 data/datasets/*
@@ -37,19 +40,24 @@ data/annotations/*
 !data/datasets/.gitkeep
 !data/annotations/.gitkeep
 data/unannotated_texts.json
+*.json
+!config.json
 
 # Logs
 *.log
 logs/
+log/
 
 # OS specific
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Flask
 instance/
 .webassets-cache
 *.db
+flask_session/
 
 # ML Models and Data
 *.h5
@@ -62,12 +70,15 @@ instance/
 *.joblib
 *.npy
 *.npz
+checkpoints/
+models/
 
 # Jupyter Notebook
 .ipynb_checkpoints
 *.ipynb
 
 # Local development settings
+.env
 .env.local
 .env.development.local
 .env.test.local
@@ -102,6 +113,7 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+.pytest_cache/
 
 # Large media files
 *.mp4
@@ -119,4 +131,10 @@ coverage.xml
 
 # System Files
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Hunspell dictionaries
+*.dic
+*.aff
+!dictionaries/*.dic
+!dictionaries/*.aff 
