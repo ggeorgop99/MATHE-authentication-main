@@ -106,7 +106,7 @@ git clone [repository-url]
 cd MATHE-authentication
 
 # Clone the model training repository
-git clone https://github.com/yourusername/ML-techniques-on-journalistic-content-emotional-classification-and-annotation.git
+git clone https://github.com/ggeorgop99/ML-techniques-on-journalistic-content-emotional-classification-and-annotation.git
 ```
 
 2. Install system dependencies (Linux/WSL only):
