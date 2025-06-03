@@ -250,9 +250,18 @@ def topic_modelling_function(csv_filepath, no_topics, no_top_words, mode,
         output_dir = "output_topics"
         os.makedirs(output_dir, exist_ok=True)
 
+        # Create parameter string for filename
+        param_str = f"topics{no_topics}_words{no_top_words}_{mode}"
+        if mode == 'tfidf':
+            param_str += f"_maxdf{max_df}_mindf{min_df}_maxfeat{max_features}_l1{l1_ratio}_iter{max_iter}_{init}"
+        elif mode == 'lda':
+            param_str += f"_maxdf{max_df}_mindf{min_df}_maxfeat{max_features}_decay{learning_decay}_offset{learning_offset}_iter{max_iter}"
+        elif mode == 'corex':
+            param_str += f"_maxdf{max_df}_mindf{min_df}_maxfeat{max_features}_anchor{anchor_strength}_thresh{significance_threshold}_iter{max_iter}"
+
         for topic_idx in range(no_topics):
             topic_df = tweets[tweets['topic'] == topic_idx]
-            topic_filename = os.path.join(output_dir, f"{original_filename}_topic_{topic_idx + 1}.csv")
+            topic_filename = os.path.join(output_dir, f"{original_filename}_{param_str}_topic_{topic_idx + 1}.csv")
             topic_df.to_csv(topic_filename, index=False)
             print(f"Saved {topic_filename} with {len(topic_df)} rows")
 
