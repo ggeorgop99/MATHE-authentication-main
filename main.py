@@ -149,13 +149,15 @@ def get_or_create_analysis_results(filepath):
 def store_analysis_results(filepath, results_to_update):
     """Store analysis results in session with proper type conversion"""
     logger.info(f"[SESSION_DEBUG] store_analysis_results called for filepath: '{filepath}'")
-    logger.info(f"[SESSION_DEBUG] Results to update: {list(results_to_update.keys())}") # Log which keys are being updated
+    logger.info(f"[SESSION_DEBUG] Results to update: {list(results_to_update.keys())}")
 
     current_results_for_file = get_or_create_analysis_results(filepath)
     logger.info(f"[SESSION_DEBUG] BEFORE update, session data for '{filepath}': {json.dumps(convert_to_serializable(current_results_for_file.copy()), indent=2)}")
 
+    # Only update the specific keys provided in results_to_update
     for key, value in results_to_update.items():
-        current_results_for_file[key] = convert_to_serializable(value)
+        if value is not None:  # Only update if the value is not None
+            current_results_for_file[key] = convert_to_serializable(value)
     
     logger.info(f"[SESSION_DEBUG] AFTER update, session data for '{filepath}': {json.dumps(convert_to_serializable(current_results_for_file.copy()), indent=2)}")
     session.modified = True
@@ -187,36 +189,45 @@ def analyze():
                     file.save(filepath)
                     
                     try:
-                        # Preprocess the file
-                        preprocessed_filepath = pp.preprocess_file(filepath)
-                        
-                        # Initialize or get analysis results
+                        # Get existing analysis results or create new ones
                         analysis_results = get_or_create_analysis_results(filename)
                         
-                        # Generate preview and column info if not already in session
-                        if not analysis_results['preview'] or not analysis_results['column_info']:
+                        # Only reset topic modeling and sentiment analysis results
+                        analysis_results['topic_modelling_results'] = None
+                        analysis_results['sentiment_results'] = None
+                        analysis_results['predictions_preview'] = None
+                        session.modified = True
+                        
+                        # Preprocess the file if not already done
+                        if not analysis_results.get('preprocessed_filepath'):
+                            preprocessed_filepath = pp.preprocess_file(filepath)
+                            analysis_results['preprocessed_filepath'] = preprocessed_filepath
+                            session.modified = True
+                        else:
+                            preprocessed_filepath = analysis_results['preprocessed_filepath']
+                        
+                        # Generate preview and column info if not already done
+                        if not analysis_results.get('preview') or not analysis_results.get('column_info'):
                             preview = csv_handler.get_preview(filepath)
                             preprocessed_preview = csv_handler.get_preview(preprocessed_filepath)
                             column_info = csv_handler.get_column_info(filepath)
                             
-                            # Store all results including preprocessed filepath
                             store_analysis_results(filename, {
                                 'preview': preview,
                                 'preprocessed_preview': preprocessed_preview,
                                 'column_info': column_info,
-                                'preprocessed_filepath': preprocessed_filepath,
                                 'original_filepath': filepath
                             })
                         
-                            # Generate word cloud if not already generated
-                            if not analysis_results['wordcloud_generated']:
-                                tp.generate_wordcloud(filepath)
-                                store_analysis_results(filename, {'wordcloud_generated': True})
-                            
-                            # Generate summary if not already in session
-                            if not analysis_results['summary_result']:
-                                summary_result = sum.generate_summary(filepath)
-                                store_analysis_results(filename, {'summary_result': summary_result})
+                        # Generate word cloud if not already done
+                        if not analysis_results.get('wordcloud_generated'):
+                            tp.generate_wordcloud(filepath)
+                            store_analysis_results(filename, {'wordcloud_generated': True})
+                        
+                        # Generate summary if not already done
+                        if not analysis_results.get('summary_result'):
+                            summary_result = sum.generate_summary(filepath)
+                            store_analysis_results(filename, {'summary_result': summary_result})
                         
                         # Get the latest results from session
                         analysis_results = get_or_create_analysis_results(filename)
