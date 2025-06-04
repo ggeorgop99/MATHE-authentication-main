@@ -1074,7 +1074,7 @@
                                     <div class="card h-100">
                                       <div class="card-body">
                                         <h6 class="card-title text-muted mb-3">Sentiment Distribution</h6>
-                                        <img src="{{ topic_specific_results[topic_idx|string].sentiment.file_paths.sentiment_distribution }}" 
+                                        <img src="{{ url_for('static', filename=topic_specific_results[topic_idx|string].sentiment.file_paths.sentiment_distribution) }}" 
                                              alt="Sentiment Distribution" 
                                              class="img-fluid rounded">
                                       </div>
@@ -1084,7 +1084,7 @@
                                     <div class="card h-100">
                                       <div class="card-body">
                                         <h6 class="card-title text-muted mb-3">Probability Distribution</h6>
-                                        <img src="{{ topic_specific_results[topic_idx|string].sentiment.file_paths.probability_distribution }}" 
+                                        <img src="{{ url_for('static', filename=topic_specific_results[topic_idx|string].sentiment.file_paths.probability_distribution) }}" 
                                              alt="Probability Distribution" 
                                              class="img-fluid rounded">
                                       </div>
@@ -1095,12 +1095,66 @@
                                       <div class="card h-100">
                                         <div class="card-body">
                                           <h6 class="card-title text-muted mb-3">Uncertainty Distribution</h6>
-                                          <img src="{{ topic_specific_results[topic_idx|string].sentiment.file_paths.uncertainty_distribution }}" 
+                                          <img src="{{ url_for('static', filename=topic_specific_results[topic_idx|string].sentiment.file_paths.uncertainty_distribution) }}" 
                                                alt="Uncertainty Distribution" 
                                                class="img-fluid rounded">
                                         </div>
                                       </div>
                                     </div>
+                                  {% endif %}
+                                </div>
+                              </div>
+
+                              <!-- Add Predictions Preview Section -->
+                              <div class="predictions-preview mt-4">
+                                <h6 class="text-muted mb-3">Predictions Preview</h6>
+                                <div class="table-responsive">
+                                  <table class="table table-striped table-hover">
+                                    <thead>
+                                      <tr>
+                                        <th>Text</th>
+                                        <th>Sentiment</th>
+                                        {% if topic_specific_results[topic_idx|string].sentiment.uncertainty %}
+                                        <th>Uncertainty</th>
+                                        {% endif %}
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {% if topic_specific_results[topic_idx|string].sentiment.predictions_preview %}
+                                        {% for row in topic_specific_results[topic_idx|string].sentiment.predictions_preview %}
+                                        <tr>
+                                          <td>{{ row.text }}</td>
+                                          <td>{{ row.sentiment_label }}</td>
+                                          {% if topic_specific_results[topic_idx|string].sentiment.uncertainty %}
+                                          <td>{{ "%.2f"|format(row.uncertainty) }}</td>
+                                          {% endif %}
+                                        </tr>
+                                        {% endfor %}
+                                      {% else %}
+                                        <tr>
+                                          <td colspan="3" class="text-center">No predictions preview available</td>
+                                        </tr>
+                                      {% endif %}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+
+                              <!-- Add Download Buttons -->
+                              <div class="mt-4">
+                                <h6 class="text-muted mb-3">Download Results</h6>
+                                <div class="d-flex gap-2">
+                                  {% if topic_specific_results[topic_idx|string].sentiment.file_paths.preprocessed_predictions %}
+                                  <a href="{{ url_for('download', filename=topic_specific_results[topic_idx|string].sentiment.file_paths.preprocessed_predictions) }}" 
+                                     class="btn btn-outline-primary">
+                                    <i class="fa-solid fa-download me-1"></i> Download Preprocessed Predictions
+                                  </a>
+                                  {% endif %}
+                                  {% if topic_specific_results[topic_idx|string].sentiment.file_paths.unpreprocessed_predictions %}
+                                  <a href="{{ url_for('download', filename=topic_specific_results[topic_idx|string].sentiment.file_paths.unpreprocessed_predictions) }}" 
+                                     class="btn btn-outline-primary">
+                                    <i class="fa-solid fa-download me-1"></i> Download Unpreprocessed Predictions
+                                  </a>
                                   {% endif %}
                                 </div>
                               </div>
@@ -1384,7 +1438,6 @@
                     <tr>
                       <th>Text</th>
                       <th>Sentiment</th>
-                      <th>Probability</th>
                       {% if sentiment_results.uncertainty %}
                       <th>Uncertainty</th>
                       {% endif %}
@@ -1395,7 +1448,6 @@
                     <tr>
                       <td>{{ row.text }}</td>
                       <td>{{ row.sentiment_label }}</td>
-                      <td>{{ "%.2f"|format(row.prediction_probability) }}</td>
                       {% if sentiment_results.uncertainty %}
                       <td>{{ "%.2f"|format(row.uncertainty) }}</td>
                       {% endif %}

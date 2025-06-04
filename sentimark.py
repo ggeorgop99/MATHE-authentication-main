@@ -50,7 +50,7 @@ def plot_sentiment_distribution(predictions, file_name, results_dir):
     plt.close()
     return plot_filename
 
-def plot_predicted_probabilities(probabilities, results_dir):
+def plot_predicted_probabilities(probabilities, results_dir, file_name):
     """Plot the distribution of predicted probabilities."""
     plt.figure(figsize=(16, 10))
     plt.hist(probabilities, bins=50, alpha=0.75, color="blue", label="Predicted probabilities")
@@ -62,7 +62,7 @@ def plot_predicted_probabilities(probabilities, results_dir):
     plt.yticks(fontsize=14)
     plt.legend(fontsize=14)
     
-    plot_filename = "sentiment_plots/predicted_probabilities.png"
+    plot_filename = f"sentiment_plots/{file_name}_predicted_probabilities.png"
     plot_path = f"static/{plot_filename}"
     os.makedirs(os.path.dirname(plot_path), exist_ok=True)
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
@@ -286,7 +286,7 @@ def perform_sentiment_analysis(file_name):
 
         # Generate plots
         sentiment_dist_path = plot_sentiment_distribution(predictions, file_name, results_dir)
-        probability_dist_path = plot_predicted_probabilities(probabilities, results_dir)
+        probability_dist_path = plot_predicted_probabilities(probabilities, results_dir, file_name)
 
         # Prepare results dictionary
         results = {

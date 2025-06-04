@@ -67,10 +67,12 @@ def preprocess_file(file_path):
         str: Path to the preprocessed file
     """
     try:
-        # Check if preprocessed file already exists
-        input_dir = os.path.dirname(file_path)
+        # Always save to files/temp directory
+        output_dir = "files/temp"
+        
+        # Get filename without extension
         input_filename = os.path.splitext(os.path.basename(file_path))[0]
-        output_path = os.path.join(input_dir, f"{input_filename}_preprocessed.csv")
+        output_path = os.path.join(output_dir, f"{input_filename}_preprocessed.csv")
         
         if os.path.exists(output_path):
             print(f"Preprocessed file already exists at {output_path}")
@@ -94,6 +96,9 @@ def preprocess_file(file_path):
         df = df[["text"]]
         
         df.dropna(axis=1, how="all")
+        
+        # Create output directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)
         
         # Save the preprocessed file
         df.to_csv(output_path, index=False)

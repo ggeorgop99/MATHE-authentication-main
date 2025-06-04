@@ -248,7 +248,9 @@ def topic_modelling_function(csv_filepath, no_topics, no_top_words, mode,
 
         # Save separate CSVs per topic
         output_dir = "output_topics"
+        temp_dir = "files/temp"
         os.makedirs(output_dir, exist_ok=True)
+        os.makedirs(temp_dir, exist_ok=True)
 
         # Create parameter string for filename
         param_str = f"topics{no_topics}_words{no_top_words}_{mode}"
@@ -261,9 +263,15 @@ def topic_modelling_function(csv_filepath, no_topics, no_top_words, mode,
 
         for topic_idx in range(no_topics):
             topic_df = tweets[tweets['topic'] == topic_idx]
+            # Save in output_topics directory
             topic_filename = os.path.join(output_dir, f"{original_filename}_{param_str}_topic_{topic_idx + 1}.csv")
             topic_df.to_csv(topic_filename, index=False)
             print(f"Saved {topic_filename} with {len(topic_df)} rows")
+            
+            # Also save in files/temp directory
+            temp_topic_filename = os.path.join(temp_dir, f"{original_filename}_{param_str}_topic_{topic_idx + 1}.csv")
+            topic_df.to_csv(temp_topic_filename, index=False)
+            print(f"Saved {temp_topic_filename} with {len(topic_df)} rows")
 
         ### Evaluation Metrics ###
 
