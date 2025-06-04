@@ -937,12 +937,12 @@
                           <p>{{ topic_specific_results[topic_idx|string].summary.summary }}</p>
                           <div class="summary-meta">
                             <small>
-                              Analyzed {{ topic_specific_results[topic_idx|string].summary.num_texts }} texts using {{ topic_specific_results[topic_idx|string].summary.model }}.
+                              Analyzed {{ topic_specific_results[topic_idx|string].summary.num_texts }} texts in
                               {% if topic_specific_results[topic_idx|string].summary.stages %}
                                 {% if topic_specific_results[topic_idx|string].summary.stages is string %}
-                                  {{ topic_specific_results[topic_idx|string].summary.stages }}
+                                  {{ topic_specific_results[topic_idx|string].summary.stages }} stages
                                 {% else %}
-                                  {{ topic_specific_results[topic_idx|string].summary.stages|string }}
+                                  {{ topic_specific_results[topic_idx|string].summary.stages|string }} stages
                                 {% endif %}
                               {% endif %}
                             </small>
