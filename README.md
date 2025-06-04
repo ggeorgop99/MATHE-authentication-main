@@ -13,36 +13,43 @@ A Flask-based web application for topic modeling, sentiment analysis, and text p
 
 ### Text Analysis
 - **Topic Modeling**: 
-  - Extract and analyze topics from text data using NMF and LDA
+  - Extract and analyze topics from text data using NMF, LDA, and CorEx
   - Generate word clouds for topic visualization
   - Support for Greek language content
   - Interactive topic exploration
+  - Topic-specific sentiment analysis
+  - Topic-specific summarization
 
 - **Sentiment Analysis**:
   - Real-time sentiment prediction for Greek text
-  - Custom sentiment lexicons
-  - Neural network-based classification
+  - Multiple model options (Neural Network, SentiStrength)
+  - Monte Carlo uncertainty estimation
   - Support for multiple sentiment categories
   - Batch processing capabilities
+  - Topic-specific sentiment analysis
 
 - **Text Summarization**:
   - Extractive summarization for Greek content
   - Customizable summary length
   - Support for multiple documents
   - Quality metrics for summaries
+  - Topic-specific summarization
 
 ### File Processing
 - CSV file upload and processing
+- Automatic text column standardization
 - Support for various text formats
 - Batch processing capabilities
 - Temporary file management
 - Secure file handling
+- Caching of preprocessed files for improved performance
 
 ### Data Management
 - Dataset organization and storage
 - Annotation management
 - Results visualization
 - Export capabilities
+- Session-based result storage
 
 ## Project Structure
 
@@ -70,7 +77,7 @@ MATHE-authentication/
 │   ├── base.html           # Base template
 │   ├── home.html           # Landing page
 │   ├── analyze.html        # Analysis interface
-│   └── results.html        # Results display
+│   └── analysis_results.html # Results display
 │
 ├── savedmodel_bin/         # Saved ML models
 ├── finallexformysenti/     # Sentiment lexicons
@@ -131,7 +138,7 @@ python -m spacy download el_core_news_md
 
 6. Create required directories:
 ```bash
-mkdir -p data/datasets data/annotations
+mkdir -p data/datasets data/annotations files/temp static/wordclouds output_topics summaries
 ```
 
 ## Usage
@@ -144,38 +151,56 @@ Access the web interface at `http://localhost:5000`
 
 ### Main Features
 
-1. **Topic Modeling**
-   - Upload text data in CSV format
-   - Select number of topics
-   - Choose between NMF and LDA algorithms
+1. **File Upload and Initial Analysis**
+   - Upload a CSV file containing text data
+   - The system will automatically:
+     - Standardize the text column
+     - Generate a word cloud
+     - Create a text summary
+     - Display file preview and column information
+
+2. **Topic Modeling**
+   - Select number of topics (default: 5)
+   - Choose algorithm (NMF, LDA, or CorEx)
+   - Adjust parameters:
+     - Maximum document frequency (0-1)
+     - Minimum document frequency (≥1)
+     - Maximum features (≥100)
+     - Maximum iterations (≥100)
+     - Algorithm-specific parameters
    - View topic distributions and word clouds
    - Export results
 
-2. **Sentiment Analysis**
-   - Input text for real-time analysis
-   - Batch process multiple texts
+3. **Topic-Specific Analysis**
+   - For each topic:
+     - Generate a topic-specific summary
+     - Perform sentiment analysis on topic content
+     - View topic-specific visualizations
+     - Export topic-specific results
+
+4. **Sentiment Analysis**
+   - Choose model:
+     - Neural Network (with Monte Carlo uncertainty)
+     - SentiStrength
+   - Adjust parameters:
+     - Uncertainty threshold (5-50% for Monte Carlo)
    - View sentiment scores and categories
    - Export analysis results
 
-3. **Text Summarization**
-   - Input text for summarization
-   - Adjust summary length
-   - View and compare summaries
-   - Export generated summaries
-
-4. **File Management**
-   - Upload and process CSV files
-   - Manage temporary files
-   - Export processed results
-   - View processing history
+5. **File Management**
+   - All processed files are cached for improved performance
+   - Temporary files are managed automatically
+   - Results can be exported at any time
+   - Session-based storage of analysis results
 
 ## API Endpoints
 
 - `/`: Home page
 - `/analyze`: Text analysis interface
-- `/topic_modelling`: Topic modeling analysis
-- `/sentiment`: Sentiment analysis
-- `/summarize`: Text summarization
+- `/topic_modelling_form`: Topic modeling analysis
+- `/topic_summary`: Generate topic-specific summary
+- `/topic_sentiment`: Perform topic-specific sentiment analysis
+- `/sentiment_analysis`: General sentiment analysis
 - `/files/<filename>`: File download
 - `/api/next-text`: Get next text for analysis
 - `/api/process`: Process text data
@@ -194,9 +219,15 @@ Access the web interface at `http://localhost:5000`
    - Make sure you're using the correct Python version
    - Try updating pip: `pip install --upgrade pip`
 
-3. **Environment variables not loading**
-   - Check if .env file exists and is properly formatted
-   - Verify environment variables are being loaded in the application
+3. **File processing errors**
+   - Ensure CSV files have a text column named 'text' or 'reviews'
+   - Check file encoding (UTF-8 recommended)
+   - Verify file permissions in the temp directory
+
+4. **Model loading errors**
+   - Verify model files are in the correct directories
+   - Check model file permissions
+   - Ensure all dependencies are installed
 
 ## Contributing
 
