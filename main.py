@@ -29,6 +29,11 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = os.urandom(24)
 app.config['UPLOAD_FOLDER'] = 'files/temp'
 
+# Add enumerate filter to Jinja2
+@app.template_filter('enumerate')
+def enumerate_filter(iterable):
+    return enumerate(iterable)
+
 app.config["SESSION_PERMANENT"] = False # So sessions expire when browser closes (optional)
 app.config["SESSION_TYPE"] = "filesystem" # Store sessions on the filesystem
 app.config["SESSION_FILE_DIR"] = "./flask_session" # Directory to store session files
@@ -192,10 +197,11 @@ def analyze():
                         # Get existing analysis results or create new ones
                         analysis_results = get_or_create_analysis_results(filename)
                         
-                        # Only reset topic modeling and sentiment analysis results
+                        # Reset topic modeling, sentiment analysis, and topic-specific results
                         analysis_results['topic_modelling_results'] = None
                         analysis_results['sentiment_results'] = None
                         analysis_results['predictions_preview'] = None
+                        analysis_results['topic_specific_results'] = {}
                         session.modified = True
                         
                         # Preprocess the file if not already done
@@ -232,14 +238,14 @@ def analyze():
                         # Get the latest results from session
                         analysis_results = get_or_create_analysis_results(filename)
                         
-                        return render_template('analysis_results.html', 
-                                             filepath=filename,
-                                             results_csv=analysis_results['preview'],
-                                             preprocessed_csv=analysis_results['preprocessed_preview'],
-                                             column_info=analysis_results['column_info'],
-                                             summary_result=analysis_results['summary_result'],
-                                             available_models=sp.AVAILABLE_MODELS,
-                                             testing_methods=sp.TESTING_METHODS)
+                        return render_template('analysis_results.html',
+                                            filepath=filename,
+                                            results_csv=analysis_results['preview'],
+                                            preprocessed_csv=analysis_results['preprocessed_preview'],
+                                            column_info=analysis_results['column_info'],
+                                            summary_result=analysis_results['summary_result'],
+                                            available_models=sp.AVAILABLE_MODELS,
+                                            testing_methods=sp.TESTING_METHODS)
                     except Exception as e:
                         logger.error(f"Error processing file: {str(e)}")
                         flash(f'Error processing file: {str(e)}', 'danger')
@@ -295,7 +301,7 @@ def sentiment_analysis():
         # Ensure 'results_from_sp' and 'predictions_preview_data' are defined before use
         results_from_sp = None
         predictions_preview_data = []
-
+        
         try:
             # Run sentiment analysis
             results_from_sp = sp.perform_sentiment_analysis(
@@ -335,118 +341,117 @@ def sentiment_analysis():
         logger.info(f"[SENTIMENT_ROUTE_DEBUG] Final session data for '{filepath}' before rendering: {json.dumps(convert_to_serializable(analysis_data_for_template.copy()), indent=2)}")
         
         return render_template('analysis_results.html',
-                               filepath=filepath,
-                               results_csv=analysis_data_for_template.get('preview'),
-                               preprocessed_csv=analysis_data_for_template.get('preprocessed_preview'),
-                               column_info=analysis_data_for_template.get('column_info'),
-                               summary_result=analysis_data_for_template.get('summary_result'),
-                               sentiment_results=analysis_data_for_template.get('sentiment_results'),
-                               results_topic_modelling=analysis_data_for_template.get('topic_modelling_results'),
-                               predictions_preview=analysis_data_for_template.get('predictions_preview'),
-                               available_models=sp.AVAILABLE_MODELS,
-                               testing_methods=sp.TESTING_METHODS,
-                               active_tab='sentiment')
+                            filepath=filepath,
+                            results_csv=analysis_data_for_template.get('preview'),
+                            preprocessed_csv=analysis_data_for_template.get('preprocessed_preview'),
+                            column_info=analysis_data_for_template.get('column_info'),
+                            summary_result=analysis_data_for_template.get('summary_result'),
+                            sentiment_results=analysis_data_for_template.get('sentiment_results'),
+                            results_topic_modelling=analysis_data_for_template.get('topic_modelling_results'),
+                            predictions_preview=analysis_data_for_template.get('predictions_preview'),
+                            available_models=sp.AVAILABLE_MODELS,
+                            testing_methods=sp.TESTING_METHODS,
+                            active_tab='sentiment')
     except Exception as e:
         logger.error(f"Overall error in sentiment analysis route (filepath: {filepath}): {str(e)}", exc_info=True)
         flash(f'An unexpected error occurred in sentiment analysis: {str(e)}', 'danger')
         return redirect(url_for('analyze'))
 
-@app.route('/topic_modelling', methods=['POST'])
+@app.route('/topic_modelling_form', methods=['POST'])
 def topic_modelling_form():
-    try:
-        # Get basic parameters from form
-        no_topics = int(request.form.get('no_topics', 5))
-        no_words = int(request.form.get('no_words', 10))
-        mode = request.form.get('mode', 'tfidf')
-        
-        # Get common parameters from form
-        max_df = float(request.form.get('max_df', 0.95))
-        min_df = int(request.form.get('min_df', 2))
-        max_features = int(request.form.get('max_features', 1000))
-        max_iter = int(request.form.get('max_iter', 300))
-        
-        # Get method-specific parameters
-        if mode == 'tfidf':
-            l1_ratio = float(request.form.get('l1_ratio', 0.5))
-            init = request.form.get('init', 'nndsvd')
-            params = {
-                'l1_ratio': l1_ratio,
-                'init': init
-            }
-        elif mode == 'lda':
-            learning_decay = float(request.form.get('learning_decay', 0.7))
-            learning_offset = float(request.form.get('learning_offset', 10))
-            params = {
-                'learning_decay': learning_decay,
-                'learning_offset': learning_offset
-            }
-        elif mode == 'corex':
-            anchor_strength = float(request.form.get('anchor_strength', 2.0))
-            significance_threshold = float(request.form.get('significance_threshold', 0.05))
-            params = {
-                'anchor_strength': anchor_strength,
-                'significance_threshold': significance_threshold
-            }
-        else:
-            flash('Invalid topic modelling method', 'danger')
-            return redirect(url_for('analyze'))
-        
-        # Validate parameters
-        if not (0 <= max_df <= 1):
-            flash('Maximum document frequency must be between 0 and 1', 'danger')
-            return redirect(url_for('analyze'))
-        if min_df < 1:
-            flash('Minimum document frequency must be at least 1', 'danger')
-            return redirect(url_for('analyze'))
-        if max_features < 100:
-            flash('Maximum features must be at least 100', 'danger')
-            return redirect(url_for('analyze'))
-        if max_iter < 100:
-            flash('Maximum iterations must be at least 100', 'danger')
-            return redirect(url_for('analyze'))
-        
-        # Method-specific validations
-        if mode == 'tfidf':
-            if not (0 <= params['l1_ratio'] <= 1):
-                flash('L1/L2 ratio must be between 0 and 1', 'danger')
-                return redirect(url_for('analyze'))
-            if params['init'] not in ['nndsvd', 'random']:
-                flash('Invalid initialization method', 'danger')
-                return redirect(url_for('analyze'))
-        elif mode == 'lda':
-            if not (0.5 <= params['learning_decay'] <= 1.0):
-                flash('Learning decay must be between 0.5 and 1.0', 'danger')
-                return redirect(url_for('analyze'))
-            if params['learning_offset'] < 1:
-                flash('Learning offset must be at least 1', 'danger')
-                return redirect(url_for('analyze'))
-        elif mode == 'corex':
-            if not (1.0 <= params['anchor_strength'] <= 10.0):
-                flash('Anchor strength must be between 1.0 and 10.0', 'danger')
-                return redirect(url_for('analyze'))
-            if not (0.0 <= params['significance_threshold'] <= 1.0):
-                flash('Significance threshold must be between 0.0 and 1.0', 'danger')
-                return redirect(url_for('analyze'))
-        
-        # Get the filepath from the session or request
-        filepath = request.form.get('filepath')
-        logger.info(f"[TOPIC_ROUTE_DEBUG] Received filepath: '{filepath}'")
+    if 'filepath' not in request.form:
+        return jsonify({'error': 'No file selected'}), 400
+    
+    filepath = request.form['filepath']
+    no_topics = int(request.form.get('no_topics', 5))
+    no_words = int(request.form.get('no_words', 10))
+    mode = request.form.get('mode', 'tfidf')
+    max_df = float(request.form.get('max_df', 0.95))
+    min_df = int(request.form.get('min_df', 2))
+    max_features = int(request.form.get('max_features', 1000))
+    max_iter = int(request.form.get('max_iter', 300))
+    
+    # Get method-specific parameters
+    if mode == 'tfidf':
+        l1_ratio = float(request.form.get('l1_ratio', 0.5))
+        init = request.form.get('init', 'nndsvd')
+        params = {
+            'l1_ratio': l1_ratio,
+            'init': init
+        }
+    elif mode == 'lda':
+        learning_decay = float(request.form.get('learning_decay', 0.7))
+        learning_offset = float(request.form.get('learning_offset', 10))
+        params = {
+            'learning_decay': learning_decay,
+            'learning_offset': learning_offset
+        }
+    elif mode == 'corex':
+        anchor_strength = float(request.form.get('anchor_strength', 2.0))
+        significance_threshold = float(request.form.get('significance_threshold', 0.05))
+        params = {
+            'anchor_strength': anchor_strength,
+            'significance_threshold': significance_threshold
+        }
+    else:
+        return jsonify({'error': 'Invalid topic modelling method'}), 400
 
-        if not filepath:
-            flash('No file selected for analysis', 'danger')
+    # Validate parameters
+    if not (0 <= max_df <= 1):
+        flash('Maximum document frequency must be between 0 and 1', 'danger')
+        return redirect(url_for('analyze'))
+    if min_df < 1:
+        flash('Minimum document frequency must be at least 1', 'danger')
+        return redirect(url_for('analyze'))
+    if max_features < 100:
+        flash('Maximum features must be at least 100', 'danger')
+        return redirect(url_for('analyze'))
+    if max_iter < 100:
+        flash('Maximum iterations must be at least 100', 'danger')
+        return redirect(url_for('analyze'))
+    
+    # Method-specific validations
+    if mode == 'tfidf':
+        if not (0 <= params['l1_ratio'] <= 1):
+            flash('L1/L2 ratio must be between 0 and 1', 'danger')
             return redirect(url_for('analyze'))
-        
+        if params['init'] not in ['nndsvd', 'random']:
+            flash('Invalid initialization method', 'danger')
+            return redirect(url_for('analyze'))
+    elif mode == 'lda':
+        if not (0.5 <= params['learning_decay'] <= 1.0):
+            flash('Learning decay must be between 0.5 and 1.0', 'danger')
+            return redirect(url_for('analyze'))
+        if params['learning_offset'] < 1:
+            flash('Learning offset must be at least 1', 'danger')
+            return redirect(url_for('analyze'))
+    elif mode == 'corex':
+        if not (1.0 <= params['anchor_strength'] <= 10.0):
+            flash('Anchor strength must be between 1.0 and 10.0', 'danger')
+            return redirect(url_for('analyze'))
+        if not (0.0 <= params['significance_threshold'] <= 1.0):
+            flash('Significance threshold must be between 0.0 and 1.0', 'danger')
+            return redirect(url_for('analyze'))
+    
+    # Get current analysis results
+    analysis_results = get_or_create_analysis_results(filepath)
+    
+    # Reset topic_specific_results when new topic modeling is run
+    analysis_results['topic_specific_results'] = {}
+    
+    # Store the updated analysis results
+    store_analysis_results(filepath, analysis_results)
+    
+    try:
+        # Construct the full file path
         full_filepath = os.path.join(app.config['UPLOAD_FOLDER'], filepath)
-        
-        # Get existing analysis results (ensures initial structure and marks modified if new)
-        analysis_results = get_or_create_analysis_results(filepath) 
         
         # Run topic modeling with all parameters
         results = tm.topic_modelling_function(
-            full_filepath, 
-            no_topics, 
-            no_words, 
-            mode,
+            full_filepath,
+            no_topics=no_topics,
+            no_top_words=no_words,
+            mode=mode,
             max_df=max_df,
             min_df=min_df,
             max_features=max_features,
@@ -454,21 +459,44 @@ def topic_modelling_form():
             **params
         )
         
-        # Store ONLY the new topic modeling results. 
-        # store_analysis_results will merge this into the existing dictionary.
-        store_analysis_results(filepath, {
-            'topic_modelling_results': results
+        # Store topic file paths
+        topic_files = {}
+        logger.info(f"[TOPIC_MODEL_DEBUG] Output directory: {results['output_dir']}")
+        logger.info(f"[TOPIC_MODEL_DEBUG] Base filename: {os.path.splitext(filepath)[0]}")
+        
+        # Create parameter string for filename
+        param_str = f"topics{no_topics}_words{no_words}_{mode}"
+        if mode == 'tfidf':
+            param_str += f"_maxdf{max_df}_mindf{min_df}_maxfeat{max_features}_l1{l1_ratio}_iter{max_iter}_{init}"
+        elif mode == 'lda':
+            param_str += f"_maxdf{max_df}_mindf{min_df}_maxfeat{max_features}_decay{learning_decay}_offset{learning_offset}_iter{max_iter}"
+        elif mode == 'corex':
+            param_str += f"_maxdf{max_df}_mindf{min_df}_maxfeat{max_features}_anchor{anchor_strength}_thresh{significance_threshold}_iter{max_iter}"
+        
+        for i in range(no_topics):
+            topic_file = os.path.join(results['output_dir'], f"{os.path.splitext(filepath)[0]}_{param_str}_topic_{i + 1}.csv")
+            logger.info(f"[TOPIC_MODEL_DEBUG] Checking topic file: {topic_file}")
+            if os.path.exists(topic_file):
+                topic_files[str(i)] = topic_file
+                logger.info(f"[TOPIC_MODEL_DEBUG] Found topic file for topic {i}")
+            else:
+                logger.error(f"[TOPIC_MODEL_DEBUG] Topic file not found: {topic_file}")
+        
+        # Update analysis results
+        analysis_results.update({
+            'topic_modelling_results': results,
+            'topic_files': topic_files,
+            'topic_specific_results': {}  # Reset topic-specific results
         })
         
-        # Get the latest results from session to pass to render_template
-        analysis_results = get_or_create_analysis_results(filepath) 
-        logger.info(f"[TOPIC_ROUTE_DEBUG] Final session data for '{filepath}' before rendering: {json.dumps(convert_to_serializable(analysis_results.copy()), indent=2)}")
+        # Store the updated results
+        store_analysis_results(filepath, analysis_results)
         
-        # Get predictions preview if it exists (good current logic)
+        # Get predictions preview if it exists
         predictions_preview = []
         if analysis_results.get('sentiment_results') and \
-        analysis_results['sentiment_results'].get('file_paths') and \
-        analysis_results['sentiment_results']['file_paths'].get('unpreprocessed_predictions'):
+           analysis_results['sentiment_results'].get('file_paths') and \
+           analysis_results['sentiment_results']['file_paths'].get('unpreprocessed_predictions'):
             try:
                 predictions_df = pd.read_csv(analysis_results['sentiment_results']['file_paths']['unpreprocessed_predictions'])
                 predictions_preview = predictions_df.head(10).to_dict('records')
@@ -476,26 +504,147 @@ def topic_modelling_form():
                 logger.error(f"Error reading predictions file in topic_modelling_form: {str(e)}")
         
         return render_template('analysis_results.html',
+                             filepath=filepath,
+                             results_csv=analysis_results.get('preview'),
+                             preprocessed_csv=analysis_results.get('preprocessed_preview'),
+                             column_info=analysis_results.get('column_info'),
+                             results_topic_modelling=analysis_results.get('topic_modelling_results'),
+                             topic_files=analysis_results.get('topic_files'),
+                             summary_result=analysis_results.get('summary_result'),
+                             sentiment_results=analysis_results.get('sentiment_results'),
+                             predictions_preview=analysis_results.get('predictions_preview'),
+                             available_models=sp.AVAILABLE_MODELS,
+                             testing_methods=sp.TESTING_METHODS,
+                             active_tab='topic')
+    except Exception as e:
+        logger.error(f"Error in topic modelling: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/topic_summary', methods=['POST'])
+def topic_summary():
+    try:
+        filepath = request.form.get('filepath')
+        topic_idx = int(request.form.get('topic_idx'))
+        
+        logger.info(f"[TOPIC_SUMMARY_DEBUG] Starting topic summary generation for file: {filepath}, topic: {topic_idx}")
+        
+        if not filepath or topic_idx is None:
+            flash('Missing required parameters', 'danger')
+            return redirect(url_for('analyze'))
+            
+        # Get current analysis results
+        analysis_results = get_or_create_analysis_results(filepath)
+        logger.info(f"[TOPIC_SUMMARY_DEBUG] Current analysis results: {json.dumps(convert_to_serializable(analysis_results.copy()), indent=2)}")
+        
+        # Check if topic modeling results exist
+        if not analysis_results.get('topic_modelling_results'):
+            flash('Please run topic modeling first', 'danger')
+            return redirect(url_for('analyze'))
+            
+        # Get the topic-specific CSV file path from stored topic files
+        topic_files = analysis_results.get('topic_files', {})
+        logger.info(f"[TOPIC_SUMMARY_DEBUG] Available topic files: {topic_files}")
+        
+        # Try to find the topic file if not in stored paths
+        if str(topic_idx) not in topic_files:
+            logger.info("[TOPIC_SUMMARY_DEBUG] Topic file not found in stored paths")
+            output_dir = analysis_results['topic_modelling_results']['output_dir']
+            
+            # Create parameter string for filename
+            topic_results = analysis_results['topic_modelling_results']
+            params = topic_results.get('parameters', {})
+            mode = params.get('mode', 'tfidf')
+            no_topics = len(topic_results['topic_words'])
+            no_words = len(topic_results['topic_words'][0]) if topic_results['topic_words'] else 10
+            
+            param_str = f"topics{no_topics}_words{no_words}_{mode}"
+            if mode == 'tfidf':
+                param_str += f"_maxdf{params.get('max_df', 0.95)}_mindf{params.get('min_df', 2)}_maxfeat{params.get('max_features', 1000)}_l1{params.get('l1_ratio', 0.5)}_iter{params.get('max_iter', 300)}_{params.get('init', 'nndsvd')}"
+            elif mode == 'lda':
+                param_str += f"_maxdf{params.get('max_df', 0.95)}_mindf{params.get('min_df', 2)}_maxfeat{params.get('max_features', 1000)}_decay{params.get('learning_decay', 0.7)}_offset{params.get('learning_offset', 10)}_iter{params.get('max_iter', 300)}"
+            elif mode == 'corex':
+                param_str += f"_maxdf{params.get('max_df', 0.95)}_mindf{params.get('min_df', 2)}_maxfeat{params.get('max_features', 1000)}_anchor{params.get('anchor_strength', 2.0)}_thresh{params.get('significance_threshold', 0.05)}_iter{params.get('max_iter', 300)}"
+            
+            expected_file = os.path.join(output_dir, f"{os.path.splitext(filepath)[0]}_{param_str}_topic_{topic_idx + 1}.csv")
+            logger.info(f"[TOPIC_SUMMARY_DEBUG] Expected file path: {expected_file}")
+            
+            if os.path.exists(expected_file):
+                topic_files[str(topic_idx)] = expected_file
+                analysis_results['topic_files'] = topic_files
+                session.modified = True
+                logger.info(f"[TOPIC_SUMMARY_DEBUG] Found topic file: {expected_file}")
+            else:
+                logger.error(f"[TOPIC_SUMMARY_DEBUG] Topic file not found at expected path: {expected_file}")
+                flash('Topic file not found. Please run topic modeling again.', 'danger')
+                return redirect(url_for('analyze'))
+        
+        topic_file = topic_files.get(str(topic_idx))
+        logger.info(f"[TOPIC_SUMMARY_DEBUG] Selected topic file: {topic_file}")
+        
+        if not topic_file or not os.path.exists(topic_file):
+            logger.error(f"[TOPIC_SUMMARY_DEBUG] Topic file not found or doesn't exist: {topic_file}")
+            flash('Topic file not found. Please run topic modeling again.', 'danger')
+            return redirect(url_for('analyze'))
+            
+        # Initialize topic-specific results if not exists
+        if 'topic_specific_results' not in analysis_results:
+            analysis_results['topic_specific_results'] = {}
+            logger.info("[TOPIC_SUMMARY_DEBUG] Initialized topic_specific_results")
+            
+        if str(topic_idx) not in analysis_results['topic_specific_results']:
+            analysis_results['topic_specific_results'][str(topic_idx)] = {
+                'summary': None,
+                'sentiment': None
+            }
+            logger.info(f"[TOPIC_SUMMARY_DEBUG] Initialized results for topic {topic_idx}")
+            
+        # Check if summary already exists
+        if analysis_results['topic_specific_results'][str(topic_idx)]['summary']:
+            logger.info("[TOPIC_SUMMARY_DEBUG] Using cached summary")
+            flash('Using cached summary for this topic', 'info')
+        else:
+            # Generate summary for the topic
+            logger.info(f"[TOPIC_SUMMARY_DEBUG] Generating new summary for topic file: {topic_file}")
+            try:
+                summary_result = sum.generate_summary(topic_file)
+                logger.info(f"[TOPIC_SUMMARY_DEBUG] Generated summary result: {json.dumps(convert_to_serializable(summary_result), indent=2)}")
+                
+                # Store the summary
+                analysis_results['topic_specific_results'][str(topic_idx)]['summary'] = summary_result
+                session.modified = True
+                logger.info("[TOPIC_SUMMARY_DEBUG] Stored summary in session")
+            except Exception as e:
+                logger.error(f"[TOPIC_SUMMARY_DEBUG] Error generating summary: {str(e)}", exc_info=True)
+                flash(f'Error generating summary: {str(e)}', 'danger')
+                return redirect(url_for('analyze'))
+            
+        # Get the latest results for rendering
+        analysis_results = get_or_create_analysis_results(filepath)
+        logger.info(f"[TOPIC_SUMMARY_DEBUG] Final session data before rendering: {json.dumps(convert_to_serializable(analysis_results.copy()), indent=2)}")
+        
+        # Debug log the topic-specific results
+        logger.info(f"[TOPIC_SUMMARY_DEBUG] Topic-specific results for topic {topic_idx}: {json.dumps(convert_to_serializable(analysis_results.get('topic_specific_results', {}).get(str(topic_idx), {})), indent=2)}")
+        
+        # Remove the filtering of results to preserve all topic summaries
+        return render_template('analysis_results.html',
                             filepath=filepath,
                             results_csv=analysis_results.get('preview'),
                             preprocessed_csv=analysis_results.get('preprocessed_preview'),
                             column_info=analysis_results.get('column_info'),
                             results_topic_modelling=analysis_results.get('topic_modelling_results'),
+                            topic_files=analysis_results.get('topic_files'),
+                            topic_specific_results=analysis_results.get('topic_specific_results'),
                             summary_result=analysis_results.get('summary_result'),
                             sentiment_results=analysis_results.get('sentiment_results'),
                             predictions_preview=analysis_results.get('predictions_preview'),
                             available_models=sp.AVAILABLE_MODELS,
                             testing_methods=sp.TESTING_METHODS,
                             active_tab='topic')
-    
+                            
     except Exception as e:
-        logger.error(f"Error in topic modelling route: {str(e)}", exc_info=True) # Added exc_info for traceback
-        flash(f'Error in topic modelling: {str(e)}', 'danger')
-        # It might be better to redirect to the analysis page with the filepath if possible,
-        # or a generic analyze page.
-        # If filepath is known:
-        # return redirect(url_for('analyze_file_results_page', filename=filepath_variable_if_available)) 
-        return redirect(url_for('analyze')) 
+        logger.error(f"Error in topic summary generation: {str(e)}", exc_info=True)
+        flash(f'Error generating topic summary: {str(e)}', 'danger')
+        return redirect(url_for('analyze'))
 
 @app.route('/contribute')
 def contribute():
