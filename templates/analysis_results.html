@@ -785,7 +785,7 @@
         <div class="tab-pane fade {% if active_tab == 'wordcloud' %}show active{% endif %}" id="wordcloud" role="tabpanel">
           <div class="wordcloud-section">
             <h3><i class="fa-solid fa-cloud"></i> Word Cloud</h3>
-            <img src="../static/my_wordcloud.png" alt="Word Cloud" class="img-fluid">
+            <img src="{{ url_for('static', filename=wordcloud) }}" alt="Word Cloud" class="img-fluid">
           </div>
 
           <div class="stats-section">

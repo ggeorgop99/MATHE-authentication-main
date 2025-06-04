@@ -171,12 +171,15 @@ def generate_wordcloud(filepath):
         # Ensure static directory exists
         os.makedirs('static', exist_ok=True)
         
-        # Save with absolute path
-        save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'my_wordcloud.png')
+        # Get the base filename without extension
+        base_filename = os.path.splitext(os.path.basename(filepath))[0]
+        
+        # Save with filename-specific name
+        save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', f'wordcloud_{base_filename}.png')
         wordcloud_image.save(save_path)
         logger.info(f"Wordcloud saved to: {save_path}")
         
-        return True
+        return f'wordcloud_{base_filename}.png'
     except Exception as e:
         logger.error(f"Error generating wordcloud: {str(e)}")
         return False 

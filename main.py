@@ -238,7 +238,11 @@ def analyze():
                             })
                         
                         # Generate word cloud if not already done
-                        if not analysis_results.get('wordcloud_generated'):
+                        base_filename = os.path.splitext(filename)[0]
+                        wordcloud_filename = f'wordcloud_{base_filename}.png'
+                        wordcloud_path = os.path.join('static', wordcloud_filename)
+                        
+                        if not os.path.exists(wordcloud_path):
                             tp.generate_wordcloud(filepath)
                             store_analysis_results(filename, {'wordcloud_generated': True})
                         
@@ -251,13 +255,14 @@ def analyze():
                         analysis_results = get_or_create_analysis_results(filename)
                         
                         return render_template('analysis_results.html',
-                                            filepath=filename,
-                                            results_csv=analysis_results['preview'],
-                                            preprocessed_csv=analysis_results['preprocessed_preview'],
-                                            column_info=analysis_results['column_info'],
-                                            summary_result=analysis_results['summary_result'],
-                                            available_models=sp.AVAILABLE_MODELS,
-                                            testing_methods=sp.TESTING_METHODS)
+                                             filepath=filename,
+                                             results_csv=analysis_results['preview'],
+                                             preprocessed_csv=analysis_results['preprocessed_preview'],
+                                             column_info=analysis_results['column_info'],
+                                             summary_result=analysis_results['summary_result'],
+                                             wordcloud=wordcloud_filename,  # Pass the wordcloud filename
+                                             available_models=sp.AVAILABLE_MODELS,
+                                             testing_methods=sp.TESTING_METHODS)
                     except Exception as e:
                         logger.error(f"Error processing file: {str(e)}")
                         flash(f'Error processing file: {str(e)}', 'danger')
@@ -352,20 +357,25 @@ def sentiment_analysis():
         analysis_data_for_template = get_or_create_analysis_results(filepath)
         logger.info(f"[SENTIMENT_ROUTE_DEBUG] Final session data for '{filepath}' before rendering: {json.dumps(convert_to_serializable(analysis_data_for_template.copy()), indent=2)}")
         
+        # Get the wordcloud filename
+        base_filename = os.path.splitext(filepath)[0]
+        wordcloud_filename = f'wordcloud_{base_filename}.png'
+        
         return render_template('analysis_results.html',
                             filepath=filepath,
                             results_csv=analysis_data_for_template.get('preview'),
                             preprocessed_csv=analysis_data_for_template.get('preprocessed_preview'),
                             column_info=analysis_data_for_template.get('column_info'),
-                            summary_result=analysis_data_for_template.get('summary_result'),
-                            sentiment_results=analysis_data_for_template.get('sentiment_results'),
                             results_topic_modelling=analysis_data_for_template.get('topic_modelling_results'),
                             topic_files=analysis_data_for_template.get('topic_files'),
                             topic_specific_results=analysis_data_for_template.get('topic_specific_results'),
+                            summary_result=analysis_data_for_template.get('summary_result'),
+                            sentiment_results=analysis_data_for_template.get('sentiment_results'),
                             predictions_preview=analysis_data_for_template.get('predictions_preview'),
                             available_models=sp.AVAILABLE_MODELS,
                             testing_methods=sp.TESTING_METHODS,
-                            active_tab='sentiment')
+                            active_tab='sentiment',
+                            wordcloud=wordcloud_filename)  # Add wordcloud filename
     except Exception as e:
         logger.error(f"Overall error in sentiment analysis route (filepath: {filepath}): {str(e)}", exc_info=True)
         flash(f'An unexpected error occurred in sentiment analysis: {str(e)}', 'danger')
@@ -517,6 +527,10 @@ def topic_modelling_form():
             except Exception as e:
                 logger.error(f"Error reading predictions file in topic_modelling_form: {str(e)}")
         
+        # Get the wordcloud filename
+        base_filename = os.path.splitext(filepath)[0]
+        wordcloud_filename = f'wordcloud_{base_filename}.png'
+        
         return render_template('analysis_results.html',
                              filepath=filepath,
                              results_csv=analysis_results.get('preview'),
@@ -530,7 +544,8 @@ def topic_modelling_form():
                              predictions_preview=analysis_results.get('predictions_preview'),
                              available_models=sp.AVAILABLE_MODELS,
                              testing_methods=sp.TESTING_METHODS,
-                             active_tab='topic')
+                             active_tab='topic',
+                             wordcloud=wordcloud_filename)  # Add wordcloud filename
     except Exception as e:
         logger.error(f"Error in topic modelling: {str(e)}")
         return jsonify({'error': str(e)}), 500
@@ -640,6 +655,10 @@ def topic_summary():
         # Debug log the topic-specific results
         logger.info(f"[TOPIC_SUMMARY_DEBUG] Topic-specific results for topic {topic_idx}: {json.dumps(convert_to_serializable(analysis_results.get('topic_specific_results', {}).get(str(topic_idx), {})), indent=2)}")
         
+        # Get the wordcloud filename
+        base_filename = os.path.splitext(filepath)[0]
+        wordcloud_filename = f'wordcloud_{base_filename}.png'
+        
         # Remove the filtering of results to preserve all topic summaries
         return render_template('analysis_results.html',
                             filepath=filepath,
@@ -654,7 +673,8 @@ def topic_summary():
                             predictions_preview=analysis_results.get('predictions_preview'),
                             available_models=sp.AVAILABLE_MODELS,
                             testing_methods=sp.TESTING_METHODS,
-                            active_tab='topic')
+                            active_tab='topic',
+                            wordcloud=wordcloud_filename)  # Add wordcloud filename
                             
     except Exception as e:
         logger.error(f"Error in topic summary generation: {str(e)}", exc_info=True)
@@ -795,6 +815,10 @@ def topic_sentiment():
         analysis_results['topic_specific_results'][str(topic_idx)]['sentiment'] = sentiment_results
         store_analysis_results(filepath, analysis_results)
         
+        # Get the wordcloud filename
+        base_filename = os.path.splitext(filepath)[0]
+        wordcloud_filename = f'wordcloud_{base_filename}.png'
+        
         return render_template('analysis_results.html',
                             filepath=filepath,
                             results_csv=analysis_results.get('preview'),
@@ -808,7 +832,8 @@ def topic_sentiment():
                             predictions_preview=analysis_results.get('predictions_preview'),
                             available_models=sp.AVAILABLE_MODELS,
                             testing_methods=sp.TESTING_METHODS,
-                            active_tab='topic')
+                            active_tab='topic',
+                            wordcloud=wordcloud_filename)  # Add wordcloud filename
                             
     except Exception as e:
         logger.error(f"Error in topic sentiment analysis: {str(e)}", exc_info=True)
