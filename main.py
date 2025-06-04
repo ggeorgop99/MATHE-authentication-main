@@ -191,9 +191,21 @@ def analyze():
                 if file and file.filename.endswith('.csv'):
                     filename = secure_filename(file.filename)
                     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                    file.save(filepath)
                     
                     try:
+                        # Read the file into a DataFrame
+                        df = pd.read_csv(file)
+                        
+                        # Create a temporary file to store the standardized version
+                        temp_filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"temp_{filename}")
+                        df.to_csv(temp_filepath, index=False)
+                        
+                        # Standardize the text column
+                        standardized_filepath = csv_handler.standardize_text_column(temp_filepath)
+                        
+                        # Move the standardized file to the final location
+                        os.replace(standardized_filepath, filepath)
+                        
                         # Get existing analysis results or create new ones
                         analysis_results = get_or_create_analysis_results(filename)
                         
