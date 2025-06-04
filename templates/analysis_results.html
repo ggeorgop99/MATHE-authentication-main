@@ -913,43 +913,205 @@
                 <h4><i class="fa-solid fa-microscope"></i> Topic-Specific Analysis</h4>
                 {% if results_topic_modelling and results_topic_modelling.topic_words %}
                   {% for topic_idx, topic_words in results_topic_modelling.topic_words|enumerate %}
-                  <div class="topic-card">
-                    <div class="topic-header">
-                      <h5>Topic {{ topic_idx + 1 }}</h5>
-                      <div class="topic-words">
-                        <strong>Key Words:</strong> {{ topic_words|join(', ') }}
+                  <div class="topic-card mb-4 p-4 bg-white rounded shadow-sm">
+                    <div class="topic-header mb-4">
+                      <h5 class="text-primary mb-3">
+                        <i class="fa-solid fa-layer-group me-2"></i>Topic {{ topic_idx + 1 }}
+                      </h5>
+                      <div class="topic-words mb-4">
+                        <h6 class="text-muted mb-2">Key Words:</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                          {% for word in topic_words %}
+                          <span class="badge bg-light text-dark border">{{ word }}</span>
+                          {% endfor %}
+                        </div>
                       </div>
                     </div>
                     
-                    <div class="topic-actions">
-                      <form method="POST" action="{{ url_for('topic_summary') }}" class="d-inline">
-                        <input type="hidden" name="filepath" value="{{ filepath }}">
-                        <input type="hidden" name="topic_idx" value="{{ topic_idx }}">
-                        <button type="submit" class="btn btn-primary">
-                          <i class="fa-solid fa-file-alt"></i> Generate Summary
-                        </button>
-                      </form>
+                    <div class="topic-actions mb-4">
+                      <div class="d-flex align-items-center" style="flex-wrap: nowrap;">
+                        <form method="POST" action="{{ url_for('topic_summary') }}" class="d-inline me-2">
+                          <input type="hidden" name="filepath" value="{{ filepath }}">
+                          <input type="hidden" name="topic_idx" value="{{ topic_idx }}">
+                          <button type="submit" class="btn btn-primary btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+                            <i class="fa-solid fa-file-alt me-1"></i> Summary
+                          </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('topic_sentiment') }}" class="d-inline flex-grow-1">
+                          <input type="hidden" name="filepath" value="{{ filepath }}">
+                          <input type="hidden" name="topic_idx" value="{{ topic_idx }}">
+                          <div class="sentiment-config d-flex align-items-center" style="gap: 0.5rem;">
+                            <select class="form-control form-control-sm" name="model_name" style="width: auto; min-width: 150px;" onchange="toggleTopicModelFields(this)">
+                              {% for model in available_models %}
+                              <option value="{{ model }}">{{ model }}</option>
+                              {% endfor %}
+                            </select>
+                            <div class="neural-model-fields d-inline-flex align-items-center" style="display: none; gap: 0.5rem;">
+                              <select class="form-control form-control-sm" name="testing_method" style="width: auto; min-width: 100px;" onchange="toggleTopicUncertaintyThreshold(this)">
+                                {% for method in testing_methods %}
+                                <option value="{{ method }}">{{ method|upper }}</option>
+                                {% endfor %}
+                              </select>
+                              <div class="uncertainty-threshold-field d-inline-flex align-items-center" style="display: none; gap: 0.25rem;">
+                                <input type="number" 
+                                       class="form-control form-control-sm" 
+                                       name="uncertainty_threshold" 
+                                       value="0.2" 
+                                       step="0.05" 
+                                       min="0.05" 
+                                       max="0.5" 
+                                       style="width: 80px;"
+                                       disabled>
+                                <small class="form-text text-muted" style="white-space: nowrap;">
+                                  Threshold (0.05-0.5)
+                                </small>
+                              </div>
+                            </div>
+                            <button type="submit" class="btn btn-info btn-sm">
+                              <i class="fa-solid fa-heart me-1"></i> Analyze Sentiment
+                            </button>
+                          </div>
+                        </form>
+                      </div>
                     </div>
 
                     <div class="topic-results">
-                      {% if topic_specific_results and topic_specific_results[topic_idx|string] and topic_specific_results[topic_idx|string].summary %}
-                        <div class="summary-content">
-                          <p>{{ topic_specific_results[topic_idx|string].summary.summary }}</p>
-                          <div class="summary-meta">
-                            <small>
-                              Analyzed {{ topic_specific_results[topic_idx|string].summary.num_texts }} texts in
-                              {% if topic_specific_results[topic_idx|string].summary.stages %}
-                                {% if topic_specific_results[topic_idx|string].summary.stages is string %}
-                                  {{ topic_specific_results[topic_idx|string].summary.stages }} stages
-                                {% else %}
-                                  {{ topic_specific_results[topic_idx|string].summary.stages|string }} stages
-                                {% endif %}
-                              {% endif %}
-                            </small>
+                      {% if topic_specific_results and topic_specific_results[topic_idx|string] %}
+                        {% if topic_specific_results[topic_idx|string].summary %}
+                          <div class="summary-content mb-4">
+                            <h5 class="text-primary mb-3">
+                              <i class="fa-solid fa-file-alt me-2"></i>Summary
+                            </h5>
+                            <div class="card">
+                              <div class="card-body">
+                                <p class="card-text">{{ topic_specific_results[topic_idx|string].summary.summary }}</p>
+                                <div class="summary-meta text-muted mt-3">
+                                  <small>
+                                    <i class="fa-solid fa-info-circle me-1"></i>
+                                    Analyzed {{ topic_specific_results[topic_idx|string].summary.num_texts }} texts in
+                                    {% if topic_specific_results[topic_idx|string].summary.stages %}
+                                      {% if topic_specific_results[topic_idx|string].summary.stages is string %}
+                                        {{ topic_specific_results[topic_idx|string].summary.stages }} stages
+                                      {% else %}
+                                        {{ topic_specific_results[topic_idx|string].summary.stages|string }} stages
+                                      {% endif %}
+                                    {% endif %}
+                                  </small>
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                        </div>
+                        {% endif %}
+
+                        {% if topic_specific_results[topic_idx|string].sentiment %}
+                          <div class="sentiment-content">
+                            <h5 class="text-primary mb-3">
+                              <i class="fa-solid fa-heart me-2"></i>Sentiment Analysis
+                            </h5>
+                            <div class="card mb-4">
+                              <div class="card-body">
+                                <div class="sentiment-stats">
+                                  <div class="row g-3">
+                                    <div class="col-md-4">
+                                      <div class="stat-card text-center p-3 bg-light rounded">
+                                        <h6 class="text-muted mb-2">Positive Texts</h6>
+                                        <p class="h4 mb-0 text-success">
+                                          {{ topic_specific_results[topic_idx|string].sentiment.summary.positive_count }}
+                                          <small class="text-muted">({{ "%.1f"|format(topic_specific_results[topic_idx|string].sentiment.summary.positive_percentage) }}%)</small>
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                      <div class="stat-card text-center p-3 bg-light rounded">
+                                        <h6 class="text-muted mb-2">Negative Texts</h6>
+                                        <p class="h4 mb-0 text-danger">
+                                          {{ topic_specific_results[topic_idx|string].sentiment.summary.negative_count }}
+                                          <small class="text-muted">({{ "%.1f"|format(topic_specific_results[topic_idx|string].sentiment.summary.negative_percentage) }}%)</small>
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                      <div class="stat-card text-center p-3 bg-light rounded">
+                                        <h6 class="text-muted mb-2">Total Texts</h6>
+                                        <p class="h4 mb-0 text-primary">
+                                          {{ topic_specific_results[topic_idx|string].sentiment.summary.total_texts }}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {% if topic_specific_results[topic_idx|string].sentiment.uncertainty %}
+                                  <div class="uncertainty-stats mt-4">
+                                    <h6 class="text-muted mb-3">Uncertainty Analysis</h6>
+                                    <div class="row g-3">
+                                      <div class="col-md-6">
+                                        <div class="stat-card text-center p-3 bg-light rounded">
+                                          <h6 class="text-muted mb-2">Uncertain Predictions</h6>
+                                          <p class="h4 mb-0 text-warning">
+                                            {{ topic_specific_results[topic_idx|string].sentiment.uncertainty.total_uncertain }}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div class="col-md-6">
+                                        <div class="stat-card text-center p-3 bg-light rounded">
+                                          <h6 class="text-muted mb-2">Uncertainty Ratio</h6>
+                                          <p class="h4 mb-0 text-warning">
+                                            {{ "%.1f"|format(topic_specific_results[topic_idx|string].sentiment.uncertainty.uncertain_ratio * 100) }}%
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                {% endif %}
+                              </div>
+                            </div>
+
+                            {% if topic_specific_results[topic_idx|string].sentiment.file_paths %}
+                              <div class="sentiment-plots">
+                                <div class="row g-4">
+                                  <div class="col-md-6">
+                                    <div class="card h-100">
+                                      <div class="card-body">
+                                        <h6 class="card-title text-muted mb-3">Sentiment Distribution</h6>
+                                        <img src="{{ topic_specific_results[topic_idx|string].sentiment.file_paths.sentiment_distribution }}" 
+                                             alt="Sentiment Distribution" 
+                                             class="img-fluid rounded">
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="col-md-6">
+                                    <div class="card h-100">
+                                      <div class="card-body">
+                                        <h6 class="card-title text-muted mb-3">Probability Distribution</h6>
+                                        <img src="{{ topic_specific_results[topic_idx|string].sentiment.file_paths.probability_distribution }}" 
+                                             alt="Probability Distribution" 
+                                             class="img-fluid rounded">
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {% if topic_specific_results[topic_idx|string].sentiment.file_paths.uncertainty_distribution %}
+                                    <div class="col-md-6">
+                                      <div class="card h-100">
+                                        <div class="card-body">
+                                          <h6 class="card-title text-muted mb-3">Uncertainty Distribution</h6>
+                                          <img src="{{ topic_specific_results[topic_idx|string].sentiment.file_paths.uncertainty_distribution }}" 
+                                               alt="Uncertainty Distribution" 
+                                               class="img-fluid rounded">
+                                        </div>
+                                      </div>
+                                    </div>
+                                  {% endif %}
+                                </div>
+                              </div>
+                            {% endif %}
+                          </div>
+                        {% endif %}
                       {% else %}
-                        <p class="text-muted">No summary generated yet. Click the button above to generate a summary for this topic.</p>
+                        <div class="alert alert-info">
+                          <i class="fa-solid fa-info-circle me-2"></i>
+                          No analysis generated yet. Use the buttons above to generate summary and sentiment analysis for this topic.
+                        </div>
                       {% endif %}
                     </div>
                   </div>
@@ -1305,6 +1467,77 @@ document.addEventListener('DOMContentLoaded', function() {
     toggleUncertaintyThreshold();
 });
 </script>
+
+<!-- Add JavaScript for dynamic form control -->
+<script>
+function toggleTopicModelFields(selectElement) {
+    const neuralFields = selectElement.closest('.sentiment-config').querySelector('.neural-model-fields');
+    
+    if (selectElement.value === 'sentistrength') {
+        neuralFields.remove();
+    } else {
+        // If neural fields don't exist, create them
+        if (!neuralFields) {
+            const sentimentConfig = selectElement.closest('.sentiment-config');
+            const newNeuralFields = document.createElement('div');
+            newNeuralFields.className = 'neural-model-fields d-inline-block';
+            newNeuralFields.innerHTML = `
+                <select class="form-control d-inline-block" name="testing_method" style="width: auto;" onchange="toggleTopicUncertaintyThreshold(this)">
+                    {% for method in testing_methods %}
+                    <option value="{{ method }}">{{ method|upper }}</option>
+                    {% endfor %}
+                </select>
+                <div class="uncertainty-threshold-field d-inline-flex align-items-center" style="display: none; gap: 0.25rem;">
+                    <input type="number" 
+                           class="form-control d-inline-block" 
+                           name="uncertainty_threshold" 
+                           value="0.2" 
+                           step="0.05" 
+                           min="0.05" 
+                           max="0.5" 
+                           style="width: 80px;"
+                           disabled>
+                    <small class="form-text text-muted" style="white-space: nowrap;">
+                        Uncertainty threshold (0.05-0.5)
+                    </small>
+                </div>
+            `;
+            selectElement.parentNode.insertBefore(newNeuralFields, selectElement.nextSibling);
+        }
+    }
+}
+
+function toggleTopicUncertaintyThreshold(selectElement) {
+    const uncertaintyField = selectElement.closest('.neural-model-fields').querySelector('.uncertainty-threshold-field');
+    const uncertaintyInput = uncertaintyField.querySelector('input[name="uncertainty_threshold"]');
+    
+    if (selectElement.value === 'mc') {
+        uncertaintyField.style.display = 'inline-block';
+        uncertaintyInput.disabled = false;
+        uncertaintyInput.required = true;
+        uncertaintyInput.style.opacity = '1';
+        uncertaintyInput.style.backgroundColor = '#fff';
+    } else {
+        uncertaintyField.style.display = 'none';
+        uncertaintyInput.disabled = true;
+        uncertaintyInput.required = false;      
+        uncertaintyInput.style.opacity = '0.7';
+        uncertaintyInput.style.backgroundColor = '#f8f9fa';
+    }
+}
+
+// Initialize fields on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all topic sentiment forms
+    document.querySelectorAll('.sentiment-config select[name="model_name"]').forEach(select => {
+        toggleTopicModelFields(select);
+    });
+    
+    document.querySelectorAll('.sentiment-config select[name="testing_method"]').forEach(select => {
+        toggleTopicUncertaintyThreshold(select);
+    });
+});
+</script>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -1382,24 +1615,68 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
-    // Existing uncertainty threshold toggle function
-    function toggleUncertaintyThreshold() {
-      const testingMethod = document.getElementById('testing_method').value;
-      const uncertaintyInput = document.getElementById('uncertainty_threshold');
+    // Function to toggle model fields for topic sentiment analysis
+    window.toggleTopicModelFields = function(selectElement) {
+      const neuralFields = selectElement.closest('.sentiment-config').querySelector('.neural-model-fields');
       
-      if (testingMethod === 'mc') {
+      if (selectElement.value === 'sentistrength') {
+        neuralFields.remove();
+      } else {
+        // If neural fields don't exist, create them
+        if (!neuralFields) {
+          const sentimentConfig = selectElement.closest('.sentiment-config');
+          const newNeuralFields = document.createElement('div');
+          newNeuralFields.className = 'neural-model-fields d-inline-block';
+          newNeuralFields.innerHTML = `
+            <select class="form-control d-inline-block" name="testing_method" style="width: auto;" onchange="toggleTopicUncertaintyThreshold(this)">
+              {% for method in testing_methods %}
+              <option value="{{ method }}">{{ method|upper }}</option>
+              {% endfor %}
+            </select>
+            <div class="uncertainty-threshold-field d-inline-flex align-items-center" style="display: none; gap: 0.25rem;">
+              <input type="number" 
+                     class="form-control d-inline-block" 
+                     name="uncertainty_threshold" 
+                     value="0.2" 
+                     step="0.05" 
+                     min="0.05" 
+                     max="0.5" 
+                     style="width: 80px;"
+                     disabled>
+              <small class="form-text text-muted" style="white-space: nowrap;">
+                Uncertainty threshold (0.05-0.5)
+              </small>
+            </div>
+          `;
+          selectElement.parentNode.insertBefore(newNeuralFields, selectElement.nextSibling);
+        }
+      }
+    };
+
+    // Function to toggle uncertainty threshold for topic sentiment analysis
+    window.toggleTopicUncertaintyThreshold = function(selectElement) {
+      const uncertaintyField = selectElement.closest('.neural-model-fields').querySelector('.uncertainty-threshold-field');
+      const uncertaintyInput = uncertaintyField.querySelector('input[name="uncertainty_threshold"]');
+      
+      if (selectElement.value === 'mc') {
+        uncertaintyField.style.display = 'inline-block';
         uncertaintyInput.disabled = false;
+        uncertaintyInput.required = true;
         uncertaintyInput.style.opacity = '1';
         uncertaintyInput.style.backgroundColor = '#fff';
       } else {
+        uncertaintyField.style.display = 'none';
         uncertaintyInput.disabled = true;
+        uncertaintyInput.required = false;      
         uncertaintyInput.style.opacity = '0.7';
         uncertaintyInput.style.backgroundColor = '#f8f9fa';
       }
-    }
+    };
 
-    // Run on page load to set initial state
-    toggleUncertaintyThreshold();
+    // Initialize all topic sentiment forms
+    document.querySelectorAll('.sentiment-config select[name="model_name"]').forEach(select => {
+      toggleTopicModelFields(select);
+    });
   });
 </script>
 {% endblock %}

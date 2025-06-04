@@ -30,6 +30,65 @@
 
 .topic-actions {
     margin: 1rem 0;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.sentiment-config {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.sentiment-content {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #eee;
+}
+
+.sentiment-stats {
+    display: flex;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.sentiment-stats .stat-card {
+    flex: 1;
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.sentiment-stats .stat-card h6 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.uncertainty-stats {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.uncertainty-stats h6 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.sentiment-plots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.sentiment-plots img {
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .topic-results {
