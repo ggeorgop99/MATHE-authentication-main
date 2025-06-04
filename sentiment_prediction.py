@@ -109,7 +109,7 @@ def plot_sentiment_distribution(predictions, file_name, results_dir):
     return plot_filename
 
 
-def plot_predicted_probabilities(probabilities, results_dir):
+def plot_predicted_probabilities(probabilities, results_dir, file_name):
     """
     Plot the distribution of predicted probabilities.
     """
@@ -124,7 +124,7 @@ def plot_predicted_probabilities(probabilities, results_dir):
     plt.legend(fontsize=14)
     
     # Save plot to static directory
-    plot_filename = "sentiment_plots/predicted_probabilities.png"
+    plot_filename = f"sentiment_plots/{file_name}_predicted_probabilities.png"
     plot_path = f"static/{plot_filename}"
     os.makedirs(os.path.dirname(plot_path), exist_ok=True)
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
@@ -132,7 +132,7 @@ def plot_predicted_probabilities(probabilities, results_dir):
     return plot_filename
 
 
-def plot_uncertainty_distribution(uncertainty, results_dir):
+def plot_uncertainty_distribution(uncertainty, results_dir, file_name):
     """
     Plot the distribution of prediction uncertainties.
     """
@@ -146,7 +146,7 @@ def plot_uncertainty_distribution(uncertainty, results_dir):
     plt.legend(fontsize=14)
     
     # Save plot to static directory
-    plot_filename = "sentiment_plots/uncertainty_distribution.png"
+    plot_filename = f"sentiment_plots/{file_name}_uncertainty_distribution.png"
     plot_path = f"static/{plot_filename}"
     os.makedirs(os.path.dirname(plot_path), exist_ok=True)
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
@@ -154,7 +154,7 @@ def plot_uncertainty_distribution(uncertainty, results_dir):
     return plot_filename
 
 
-def plot_predicted_predictions(Y_predictions, results_dir):
+def plot_predicted_predictions(Y_predictions, results_dir, file_name):
     plt.figure(figsize=(16, 10))
     plt.hist(Y_predictions, bins=50, alpha=0.75, color="blue", label="Predictions")
     plt.axvline(0.5, color="red", linestyle="dashed", linewidth=2, label="Threshold = 0.5")
@@ -166,7 +166,7 @@ def plot_predicted_predictions(Y_predictions, results_dir):
     plt.legend(fontsize=14)
     
     # Save plot to static directory
-    plot_filename = "sentiment_plots/predicted_predictions.png"
+    plot_filename = f"sentiment_plots/{file_name}_predicted_predictions.png"
     plot_path = f"static/{plot_filename}"
     os.makedirs(os.path.dirname(plot_path), exist_ok=True)
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
@@ -351,11 +351,11 @@ def perform_sentiment_analysis(file_name, model_name, testing_method="mc", uncer
 
         # Generate plots
         sentiment_dist_path = plot_sentiment_distribution(final_predictions, file_name, results_dir)
-        probability_dist_path = plot_predicted_probabilities(probs, results_dir)
-        predictions_dist_path = plot_predicted_predictions(final_predictions, results_dir)
+        probability_dist_path = plot_predicted_probabilities(probs, results_dir, file_name)
+        predictions_dist_path = plot_predicted_predictions(final_predictions, results_dir, file_name)
         
         if testing_method == 'mc':
-            uncertainty_dist_path = plot_uncertainty_distribution(uncertainty_flat, results_dir)
+            uncertainty_dist_path = plot_uncertainty_distribution(uncertainty_flat, results_dir, file_name)
 
         # Prepare results dictionary
         results = {

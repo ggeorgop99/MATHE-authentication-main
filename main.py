@@ -649,6 +649,160 @@ def topic_summary():
         flash(f'Error generating topic summary: {str(e)}', 'danger')
         return redirect(url_for('analyze'))
 
+@app.route('/topic_sentiment', methods=['POST'])
+def topic_sentiment():
+    try:
+        filepath = request.form.get('filepath')
+        topic_idx = int(request.form.get('topic_idx'))
+        model_name = request.form.get('model_name')
+        testing_method = request.form.get('testing_method')
+        uncertainty_threshold = float(request.form.get('uncertainty_threshold', 0.2))
+        
+        logger.info(f"[TOPIC_SENTIMENT_DEBUG] Starting topic sentiment analysis for file: {filepath}, topic: {topic_idx}")
+        
+        if not filepath or topic_idx is None:
+            flash('Missing required parameters', 'danger')
+            return redirect(url_for('analyze'))
+            
+        # Get current analysis results
+        analysis_results = get_or_create_analysis_results(filepath)
+        
+        # Check if topic modeling results exist
+        if not analysis_results.get('topic_modelling_results'):
+            flash('Please run topic modeling first', 'danger')
+            return redirect(url_for('analyze'))
+            
+        # Get the topic-specific CSV file path from stored topic files
+        topic_files = analysis_results.get('topic_files', {})
+        
+        # Try to find the topic file if not in stored paths
+        if str(topic_idx) not in topic_files:
+            logger.info("[TOPIC_SENTIMENT_DEBUG] Topic file not found in stored paths")
+            output_dir = "files/temp"  # Use files/temp directory
+            
+            # Create parameter string for filename
+            topic_results = analysis_results['topic_modelling_results']
+            params = topic_results.get('parameters', {})
+            mode = params.get('mode', 'tfidf')
+            no_topics = len(topic_results['topic_words'])
+            no_words = len(topic_results['topic_words'][0]) if topic_results['topic_words'] else 10
+            
+            param_str = f"topics{no_topics}_words{no_words}_{mode}"
+            if mode == 'tfidf':
+                param_str += f"_maxdf{params.get('max_df', 0.95)}_mindf{params.get('min_df', 2)}_maxfeat{params.get('max_features', 1000)}_l1{params.get('l1_ratio', 0.5)}_iter{params.get('max_iter', 300)}_{params.get('init', 'nndsvd')}"
+            elif mode == 'lda':
+                param_str += f"_maxdf{params.get('max_df', 0.95)}_mindf{params.get('min_df', 2)}_maxfeat{params.get('max_features', 1000)}_decay{params.get('learning_decay', 0.7)}_offset{params.get('learning_offset', 10)}_iter{params.get('max_iter', 300)}"
+            elif mode == 'corex':
+                param_str += f"_maxdf{params.get('max_df', 0.95)}_mindf{params.get('min_df', 2)}_maxfeat{params.get('max_features', 1000)}_anchor{params.get('anchor_strength', 2.0)}_thresh{params.get('significance_threshold', 0.05)}_iter{params.get('max_iter', 300)}"
+            
+            expected_file = os.path.join(output_dir, f"{os.path.splitext(filepath)[0]}_{param_str}_topic_{topic_idx + 1}.csv")
+            
+            if os.path.exists(expected_file):
+                topic_files[str(topic_idx)] = expected_file
+                analysis_results['topic_files'] = topic_files
+                session.modified = True
+                logger.info(f"[TOPIC_SENTIMENT_DEBUG] Found topic file: {expected_file}")
+            else:
+                logger.error(f"[TOPIC_SENTIMENT_DEBUG] Topic file not found at expected path: {expected_file}")
+                flash('Topic file not found. Please run topic modeling again.', 'danger')
+                return redirect(url_for('analyze'))
+        
+        topic_file = topic_files.get(str(topic_idx))
+        logger.info(f"[TOPIC_SENTIMENT_DEBUG] Selected topic file: {topic_file}")
+        
+        if not topic_file or not os.path.exists(topic_file):
+            logger.error(f"[TOPIC_SENTIMENT_DEBUG] Topic file not found or doesn't exist: {topic_file}")
+            flash('Topic file not found. Please run topic modeling again.', 'danger')
+            return redirect(url_for('analyze'))
+            
+        # Initialize topic-specific results if not exists
+        if 'topic_specific_results' not in analysis_results:
+            analysis_results['topic_specific_results'] = {}
+            
+        if str(topic_idx) not in analysis_results['topic_specific_results']:
+            analysis_results['topic_specific_results'][str(topic_idx)] = {
+                'summary': None,
+                'sentiment': None
+            }
+            
+        # Preprocess the topic file if not already done
+        topic_file_key = f"topic_{topic_idx}_preprocessed_filepath"
+        if topic_file_key not in analysis_results or not analysis_results[topic_file_key]:
+            preprocessed_topic_file = pp.preprocess_file(topic_file)
+            analysis_results[topic_file_key] = preprocessed_topic_file
+            session.modified = True
+            logger.info(f"[TOPIC_SENTIMENT_DEBUG] Preprocessed topic file: {preprocessed_topic_file}")
+        else:
+            preprocessed_topic_file = analysis_results[topic_file_key]
+            
+        # Get the base filename without extension for sentiment analysis
+        base_filename = os.path.splitext(os.path.basename(topic_file))[0]
+        
+        # Perform sentiment analysis
+        sentiment_results = sp.perform_sentiment_analysis(
+            base_filename,
+            model_name=model_name,
+            testing_method=testing_method if model_name != 'sentistrength' else None,
+            uncertainty_threshold=uncertainty_threshold if testing_method == 'mc' else None
+        )
+        
+        # Update file paths in sentiment results to be relative to static directory
+        if sentiment_results and 'file_paths' in sentiment_results:
+            for key, path in sentiment_results['file_paths'].items():
+                if path and os.path.exists(path):
+                    # Make paths relative to static directory for images
+                    if key in ['sentiment_distribution', 'probability_distribution', 'uncertainty_distribution']:
+                        # Get the directory and filename
+                        dir_name = os.path.dirname(path)
+                        file_name = os.path.basename(path)
+                        # Add the topic filename to the graph name
+                        name_parts = os.path.splitext(file_name)
+                        new_file_name = f"{name_parts[0]}_{base_filename}{name_parts[1]}"
+                        # Create the new path
+                        new_path = os.path.join(dir_name, new_file_name)
+                        # Rename the file
+                        os.rename(path, new_path)
+                        # Update the path in results
+                        sentiment_results['file_paths'][key] = os.path.relpath(new_path, 'static')
+                    # Keep absolute paths for CSV files
+                    else:
+                        sentiment_results['file_paths'][key] = path
+                    logger.info(f"[TOPIC_SENTIMENT_DEBUG] Updated file path for {key}: {sentiment_results['file_paths'][key]}")
+        
+        # Get predictions preview
+        if sentiment_results and 'file_paths' in sentiment_results and 'unpreprocessed_predictions' in sentiment_results['file_paths']:
+            try:
+                predictions_df = pd.read_csv(sentiment_results['file_paths']['unpreprocessed_predictions'])
+                sentiment_results['predictions_preview'] = predictions_df.head(10).to_dict('records')
+                logger.info(f"[TOPIC_SENTIMENT_DEBUG] Added predictions preview with {len(sentiment_results['predictions_preview'])} rows")
+            except Exception as e:
+                logger.error(f"Error reading predictions file: {str(e)}")
+                sentiment_results['predictions_preview'] = []
+        
+        # Store the results
+        analysis_results['topic_specific_results'][str(topic_idx)]['sentiment'] = sentiment_results
+        store_analysis_results(filepath, analysis_results)
+        
+        return render_template('analysis_results.html',
+                            filepath=filepath,
+                            results_csv=analysis_results.get('preview'),
+                            preprocessed_csv=analysis_results.get('preprocessed_preview'),
+                            column_info=analysis_results.get('column_info'),
+                            results_topic_modelling=analysis_results.get('topic_modelling_results'),
+                            topic_files=analysis_results.get('topic_files'),
+                            topic_specific_results=analysis_results.get('topic_specific_results'),
+                            summary_result=analysis_results.get('summary_result'),
+                            sentiment_results=analysis_results.get('sentiment_results'),
+                            predictions_preview=analysis_results.get('predictions_preview'),
+                            available_models=sp.AVAILABLE_MODELS,
+                            testing_methods=sp.TESTING_METHODS,
+                            active_tab='topic')
+                            
+    except Exception as e:
+        logger.error(f"Error in topic sentiment analysis: {str(e)}", exc_info=True)
+        flash(f'Error performing topic sentiment analysis: {str(e)}', 'danger')
+        return redirect(url_for('analyze'))
+
 @app.route('/contribute')
 def contribute():
     """Contribution page with dataset upload and sentiment annotation"""
