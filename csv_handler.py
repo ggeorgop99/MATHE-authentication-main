@@ -94,3 +94,52 @@ def get_column_info(filepath):
         logger.error(f"Error getting column info for {filepath}: {str(e)}")
         raise
 
+def standardize_text_column(filepath):
+    """
+    Standardize the text column in a CSV file by:
+    1. Looking for a column named 'text' or 'reviews'
+    2. If found, rename 'reviews' to 'text' if necessary
+    3. If neither found, use the first text column and rename it to 'text'
+    4. Keep only the text column in the output file
+    
+    Args:
+        filepath (str): Path to the CSV file
+        
+    Returns:
+        str: Path to the standardized file
+    """
+    try:
+        # Read the CSV file
+        df = pd.read_csv(filepath)
+        
+        # Check for 'text' or 'reviews' column
+        if 'text' in df.columns:
+            # Already has 'text' column, but we'll still standardize
+            text_column = 'text'
+        elif 'reviews' in df.columns:
+            # Rename 'reviews' to 'text'
+            df = df.rename(columns={'reviews': 'text'})
+            text_column = 'text'
+        else:
+            # Find the first text column
+            text_columns = df.select_dtypes(include=['object']).columns
+            if len(text_columns) == 0:
+                raise ValueError("No text columns found in the CSV file")
+            
+            # Rename the first text column to 'text'
+            df = df.rename(columns={text_columns[0]: 'text'})
+            text_column = 'text'
+        
+        # Keep only the text column
+        df = df[['text']]
+        
+        # Save the standardized file
+        output_path = filepath  # Overwrite the original file
+        df.to_csv(output_path, index=False)
+        
+        return output_path
+        
+    except Exception as e:
+        logger.error(f"Error standardizing text column in {filepath}: {str(e)}")
+        raise
+

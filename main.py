@@ -191,9 +191,21 @@ def analyze():
                 if file and file.filename.endswith('.csv'):
                     filename = secure_filename(file.filename)
                     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                    file.save(filepath)
                     
                     try:
+                        # Read the file into a DataFrame
+                        df = pd.read_csv(file)
+                        
+                        # Create a temporary file to store the standardized version
+                        temp_filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"temp_{filename}")
+                        df.to_csv(temp_filepath, index=False)
+                        
+                        # Standardize the text column
+                        standardized_filepath = csv_handler.standardize_text_column(temp_filepath)
+                        
+                        # Move the standardized file to the final location
+                        os.replace(standardized_filepath, filepath)
+                        
                         # Get existing analysis results or create new ones
                         analysis_results = get_or_create_analysis_results(filename)
                         
@@ -226,7 +238,11 @@ def analyze():
                             })
                         
                         # Generate word cloud if not already done
-                        if not analysis_results.get('wordcloud_generated'):
+                        base_filename = os.path.splitext(filename)[0]
+                        wordcloud_filename = f'wordcloud_{base_filename}.png'
+                        wordcloud_path = os.path.join('static', wordcloud_filename)
+                        
+                        if not os.path.exists(wordcloud_path):
                             tp.generate_wordcloud(filepath)
                             store_analysis_results(filename, {'wordcloud_generated': True})
                         
@@ -239,13 +255,14 @@ def analyze():
                         analysis_results = get_or_create_analysis_results(filename)
                         
                         return render_template('analysis_results.html',
-                                            filepath=filename,
-                                            results_csv=analysis_results['preview'],
-                                            preprocessed_csv=analysis_results['preprocessed_preview'],
-                                            column_info=analysis_results['column_info'],
-                                            summary_result=analysis_results['summary_result'],
-                                            available_models=sp.AVAILABLE_MODELS,
-                                            testing_methods=sp.TESTING_METHODS)
+                                             filepath=filename,
+                                             results_csv=analysis_results['preview'],
+                                             preprocessed_csv=analysis_results['preprocessed_preview'],
+                                             column_info=analysis_results['column_info'],
+                                             summary_result=analysis_results['summary_result'],
+                                             wordcloud=wordcloud_filename,  # Pass the wordcloud filename
+                                             available_models=sp.AVAILABLE_MODELS,
+                                             testing_methods=sp.TESTING_METHODS)
                     except Exception as e:
                         logger.error(f"Error processing file: {str(e)}")
                         flash(f'Error processing file: {str(e)}', 'danger')
@@ -340,20 +357,25 @@ def sentiment_analysis():
         analysis_data_for_template = get_or_create_analysis_results(filepath)
         logger.info(f"[SENTIMENT_ROUTE_DEBUG] Final session data for '{filepath}' before rendering: {json.dumps(convert_to_serializable(analysis_data_for_template.copy()), indent=2)}")
         
+        # Get the wordcloud filename
+        base_filename = os.path.splitext(filepath)[0]
+        wordcloud_filename = f'wordcloud_{base_filename}.png'
+        
         return render_template('analysis_results.html',
                             filepath=filepath,
                             results_csv=analysis_data_for_template.get('preview'),
                             preprocessed_csv=analysis_data_for_template.get('preprocessed_preview'),
                             column_info=analysis_data_for_template.get('column_info'),
-                            summary_result=analysis_data_for_template.get('summary_result'),
-                            sentiment_results=analysis_data_for_template.get('sentiment_results'),
                             results_topic_modelling=analysis_data_for_template.get('topic_modelling_results'),
                             topic_files=analysis_data_for_template.get('topic_files'),
                             topic_specific_results=analysis_data_for_template.get('topic_specific_results'),
+                            summary_result=analysis_data_for_template.get('summary_result'),
+                            sentiment_results=analysis_data_for_template.get('sentiment_results'),
                             predictions_preview=analysis_data_for_template.get('predictions_preview'),
                             available_models=sp.AVAILABLE_MODELS,
                             testing_methods=sp.TESTING_METHODS,
-                            active_tab='sentiment')
+                            active_tab='sentiment',
+                            wordcloud=wordcloud_filename)  # Add wordcloud filename
     except Exception as e:
         logger.error(f"Overall error in sentiment analysis route (filepath: {filepath}): {str(e)}", exc_info=True)
         flash(f'An unexpected error occurred in sentiment analysis: {str(e)}', 'danger')
@@ -505,6 +527,10 @@ def topic_modelling_form():
             except Exception as e:
                 logger.error(f"Error reading predictions file in topic_modelling_form: {str(e)}")
         
+        # Get the wordcloud filename
+        base_filename = os.path.splitext(filepath)[0]
+        wordcloud_filename = f'wordcloud_{base_filename}.png'
+        
         return render_template('analysis_results.html',
                              filepath=filepath,
                              results_csv=analysis_results.get('preview'),
@@ -518,7 +544,8 @@ def topic_modelling_form():
                              predictions_preview=analysis_results.get('predictions_preview'),
                              available_models=sp.AVAILABLE_MODELS,
                              testing_methods=sp.TESTING_METHODS,
-                             active_tab='topic')
+                             active_tab='topic',
+                             wordcloud=wordcloud_filename)  # Add wordcloud filename
     except Exception as e:
         logger.error(f"Error in topic modelling: {str(e)}")
         return jsonify({'error': str(e)}), 500
@@ -628,6 +655,10 @@ def topic_summary():
         # Debug log the topic-specific results
         logger.info(f"[TOPIC_SUMMARY_DEBUG] Topic-specific results for topic {topic_idx}: {json.dumps(convert_to_serializable(analysis_results.get('topic_specific_results', {}).get(str(topic_idx), {})), indent=2)}")
         
+        # Get the wordcloud filename
+        base_filename = os.path.splitext(filepath)[0]
+        wordcloud_filename = f'wordcloud_{base_filename}.png'
+        
         # Remove the filtering of results to preserve all topic summaries
         return render_template('analysis_results.html',
                             filepath=filepath,
@@ -642,7 +673,8 @@ def topic_summary():
                             predictions_preview=analysis_results.get('predictions_preview'),
                             available_models=sp.AVAILABLE_MODELS,
                             testing_methods=sp.TESTING_METHODS,
-                            active_tab='topic')
+                            active_tab='topic',
+                            wordcloud=wordcloud_filename)  # Add wordcloud filename
                             
     except Exception as e:
         logger.error(f"Error in topic summary generation: {str(e)}", exc_info=True)
@@ -674,6 +706,7 @@ def topic_sentiment():
             
         # Get the topic-specific CSV file path from stored topic files
         topic_files = analysis_results.get('topic_files', {})
+        logger.info(f"[TOPIC_SENTIMENT_DEBUG] Available topic files: {topic_files}")
         
         # Try to find the topic file if not in stored paths
         if str(topic_idx) not in topic_files:
@@ -696,6 +729,7 @@ def topic_sentiment():
                 param_str += f"_maxdf{params.get('max_df', 0.95)}_mindf{params.get('min_df', 2)}_maxfeat{params.get('max_features', 1000)}_anchor{params.get('anchor_strength', 2.0)}_thresh{params.get('significance_threshold', 0.05)}_iter{params.get('max_iter', 300)}"
             
             expected_file = os.path.join(output_dir, f"{os.path.splitext(filepath)[0]}_{param_str}_topic_{topic_idx + 1}.csv")
+            logger.info(f"[TOPIC_SENTIMENT_DEBUG] Looking for topic file at: {expected_file}")
             
             if os.path.exists(expected_file):
                 topic_files[str(topic_idx)] = expected_file
@@ -725,26 +759,70 @@ def topic_sentiment():
                 'sentiment': None
             }
             
-        # Preprocess the topic file if not already done
-        topic_file_key = f"topic_{topic_idx}_preprocessed_filepath"
-        if topic_file_key not in analysis_results or not analysis_results[topic_file_key]:
-            preprocessed_topic_file = pp.preprocess_file(topic_file)
-            analysis_results[topic_file_key] = preprocessed_topic_file
-            session.modified = True
-            logger.info(f"[TOPIC_SENTIMENT_DEBUG] Preprocessed topic file: {preprocessed_topic_file}")
-        else:
-            preprocessed_topic_file = analysis_results[topic_file_key]
-            
-        # Get the base filename without extension for sentiment analysis
+        # Get the base filename without extension
         base_filename = os.path.splitext(os.path.basename(topic_file))[0]
+        logger.info(f"[TOPIC_SENTIMENT_DEBUG] Base filename: {base_filename}")
+        
+        # Check if we already have a preprocessed file for this exact topic file
+        topic_file_key = f"topic_{topic_idx}_preprocessed_filepath"
+        expected_preprocessed_file = os.path.join("files/temp", f"{base_filename}_preprocessed.csv")
+        
+        if topic_file_key in analysis_results and analysis_results[topic_file_key] == expected_preprocessed_file and os.path.exists(expected_preprocessed_file):
+            logger.info(f"[TOPIC_SENTIMENT_DEBUG] Using existing preprocessed file: {expected_preprocessed_file}")
+            preprocessed_topic_file = expected_preprocessed_file
+        else:
+            # Create a copy of the topic file in the temp directory for preprocessing
+            temp_topic_file = os.path.join("files/temp", f"{base_filename}.csv")
+            logger.info(f"[TOPIC_SENTIMENT_DEBUG] Creating temp file at: {temp_topic_file}")
+            
+            if not os.path.exists(temp_topic_file):
+                import shutil
+                try:
+                    shutil.copy2(topic_file, temp_topic_file)
+                    logger.info(f"[TOPIC_SENTIMENT_DEBUG] Successfully copied file to: {temp_topic_file}")
+                except Exception as e:
+                    logger.error(f"[TOPIC_SENTIMENT_DEBUG] Error copying file: {str(e)}")
+                    flash('Error preparing file for analysis. Please try again.', 'danger')
+                    return redirect(url_for('analyze'))
+            
+            # Verify the temp file exists
+            if not os.path.exists(temp_topic_file):
+                logger.error(f"[TOPIC_SENTIMENT_DEBUG] Temp file not created at: {temp_topic_file}")
+                flash('Error preparing file for analysis. Please try again.', 'danger')
+                return redirect(url_for('analyze'))
+            
+            # Preprocess the copied file
+            try:
+                preprocessed_topic_file = pp.preprocess_file(temp_topic_file)
+                logger.info(f"[TOPIC_SENTIMENT_DEBUG] Successfully preprocessed file to: {preprocessed_topic_file}")
+                
+                # Verify the preprocessed file exists
+                if not os.path.exists(preprocessed_topic_file):
+                    logger.error(f"[TOPIC_SENTIMENT_DEBUG] Preprocessed file not created at: {preprocessed_topic_file}")
+                    flash('Error preprocessing file. Please try again.', 'danger')
+                    return redirect(url_for('analyze'))
+                
+                # Store the preprocessed file path
+                analysis_results[topic_file_key] = preprocessed_topic_file
+                session.modified = True
+            except Exception as e:
+                logger.error(f"[TOPIC_SENTIMENT_DEBUG] Error preprocessing file: {str(e)}")
+                flash('Error preprocessing file. Please try again.', 'danger')
+                return redirect(url_for('analyze'))
         
         # Perform sentiment analysis
-        sentiment_results = sp.perform_sentiment_analysis(
-            base_filename,
-            model_name=model_name,
-            testing_method=testing_method if model_name != 'sentistrength' else None,
-            uncertainty_threshold=uncertainty_threshold if testing_method == 'mc' else None
-        )
+        try:
+            sentiment_results = sp.perform_sentiment_analysis(
+                base_filename,
+                model_name=model_name,
+                testing_method=testing_method if model_name != 'sentistrength' else None,
+                uncertainty_threshold=uncertainty_threshold if testing_method == 'mc' else None
+            )
+            logger.info("[TOPIC_SENTIMENT_DEBUG] Successfully performed sentiment analysis")
+        except Exception as e:
+            logger.error(f"[TOPIC_SENTIMENT_DEBUG] Error in sentiment analysis: {str(e)}")
+            flash(f'Error performing sentiment analysis: {str(e)}', 'danger')
+            return redirect(url_for('analyze'))
         
         # Update file paths in sentiment results to be relative to static directory
         if sentiment_results and 'file_paths' in sentiment_results:
@@ -783,6 +861,10 @@ def topic_sentiment():
         analysis_results['topic_specific_results'][str(topic_idx)]['sentiment'] = sentiment_results
         store_analysis_results(filepath, analysis_results)
         
+        # Get the wordcloud filename
+        base_filename = os.path.splitext(filepath)[0]
+        wordcloud_filename = f'wordcloud_{base_filename}.png'
+        
         return render_template('analysis_results.html',
                             filepath=filepath,
                             results_csv=analysis_results.get('preview'),
@@ -796,7 +878,8 @@ def topic_sentiment():
                             predictions_preview=analysis_results.get('predictions_preview'),
                             available_models=sp.AVAILABLE_MODELS,
                             testing_methods=sp.TESTING_METHODS,
-                            active_tab='topic')
+                            active_tab='topic',
+                            wordcloud=wordcloud_filename)
                             
     except Exception as e:
         logger.error(f"Error in topic sentiment analysis: {str(e)}", exc_info=True)
