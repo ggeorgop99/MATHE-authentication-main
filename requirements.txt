@@ -29,3 +29,4 @@ transformers==4.11.3
 torch>=2.0.0
 corextopic>=1.1.0
 pyhunspell==0.4.0  # Requires system-level Hunspell installation
+nltk==3.8.1  # Required for text processing tasks

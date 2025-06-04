@@ -127,9 +127,13 @@ sudo apt-get install hunspell
 pip install -r requirements.txt
 ```
 
-4. Download required language models:
+4. Download required language models and NLTK data:
 ```bash
+# Download spaCy model
 python -m spacy download el_core_news_md
+
+# Download required NLTK data
+python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords'); nltk.download('wordnet')"
 ```
 
 5. Set up pre-trained models:
