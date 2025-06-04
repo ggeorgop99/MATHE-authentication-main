@@ -1,0 +1,79 @@
+/* Topic-Specific Analysis Styles */
+.topic-specific-analysis {
+    margin-top: 2rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.topic-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.topic-header {
+    margin-bottom: 1rem;
+}
+
+.topic-header h5 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.topic-words {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.topic-actions {
+    margin: 1rem 0;
+}
+
+.topic-results {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+
+.no-summary, .no-analysis {
+    color: #666;
+    font-style: italic;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.summary-section {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+.summary-section h6 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.summary-content {
+    margin: 1rem 0;
+}
+
+.summary-meta {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.summary-meta p {
+    margin-bottom: 0.25rem;
+}
+
+.summary-error {
+    color: #dc3545;
+    padding: 0.5rem;
+    background-color: #f8d7da;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+} 

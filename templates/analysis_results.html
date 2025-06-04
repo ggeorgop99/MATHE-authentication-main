@@ -907,6 +907,59 @@
                   <img src="{{ results_topic_modelling.topic_distribution_plot }}" alt="Topic Distribution" class="img-fluid">
                 </div>
               </div>
+
+              <!-- Topic-Specific Analysis Section -->
+              <div class="topic-specific-analysis">
+                <h4><i class="fa-solid fa-microscope"></i> Topic-Specific Analysis</h4>
+                {% if results_topic_modelling and results_topic_modelling.topic_words %}
+                  {% for topic_idx, topic_words in results_topic_modelling.topic_words|enumerate %}
+                  <div class="topic-card">
+                    <div class="topic-header">
+                      <h5>Topic {{ topic_idx + 1 }}</h5>
+                      <div class="topic-words">
+                        <strong>Key Words:</strong> {{ topic_words|join(', ') }}
+                      </div>
+                    </div>
+                    
+                    <div class="topic-actions">
+                      <form method="POST" action="{{ url_for('topic_summary') }}" class="d-inline">
+                        <input type="hidden" name="filepath" value="{{ filepath }}">
+                        <input type="hidden" name="topic_idx" value="{{ topic_idx }}">
+                        <button type="submit" class="btn btn-primary">
+                          <i class="fa-solid fa-file-alt"></i> Generate Summary
+                        </button>
+                      </form>
+                    </div>
+
+                    <div class="topic-results">
+                      {% if topic_specific_results and topic_specific_results[topic_idx|string] and topic_specific_results[topic_idx|string].summary %}
+                        <div class="summary-content">
+                          <p>{{ topic_specific_results[topic_idx|string].summary.summary }}</p>
+                          <div class="summary-meta">
+                            <small>
+                              Analyzed {{ topic_specific_results[topic_idx|string].summary.num_texts }} texts using {{ topic_specific_results[topic_idx|string].summary.model }}.
+                              {% if topic_specific_results[topic_idx|string].summary.stages %}
+                                {% if topic_specific_results[topic_idx|string].summary.stages is string %}
+                                  {{ topic_specific_results[topic_idx|string].summary.stages }}
+                                {% else %}
+                                  {{ topic_specific_results[topic_idx|string].summary.stages|string }}
+                                {% endif %}
+                              {% endif %}
+                            </small>
+                          </div>
+                        </div>
+                      {% else %}
+                        <p class="text-muted">No summary generated yet. Click the button above to generate a summary for this topic.</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                  {% endfor %}
+                {% else %}
+                  <div class="alert alert-info">
+                    <i class="fa-solid fa-info-circle"></i> Please run topic modeling first to see topic-specific analysis options.
+                  </div>
+                {% endif %}
+              </div>
             </div>
           {% else %}
             <div class="alert alert-info">
@@ -1230,23 +1283,19 @@ function toggleModelFields() {
 }
 
 function toggleUncertaintyThreshold() {
-    const testingMethod = document.getElementById('testing_method');
-    const uncertaintyThreshold = document.getElementById('uncertainty_threshold');
+    const testingMethod = document.getElementById('testing_method').value;
+    const uncertaintyInput = document.getElementById('uncertainty_threshold');
     
-    if (testingMethod.value === 'mc') {
-        uncertaintyThreshold.disabled = false;
-        uncertaintyThreshold.required = true;
-        uncertaintyThreshold.style.opacity = '1';
-        uncertaintyThreshold.style.backgroundColor = '#fff';
-        uncertaintyThreshold.style.color = '#000';
-        uncertaintyThreshold.style.borderColor = '#000';
+    if (testingMethod === 'mc') {
+        uncertaintyInput.disabled = false;
+        uncertaintyInput.required = true;
+        uncertaintyInput.style.opacity = '1';
+        uncertaintyInput.style.backgroundColor = '#fff';
     } else {
-        uncertaintyThreshold.disabled = true;
-        uncertaintyThreshold.required = false;      
-        uncertaintyThreshold.style.opacity = '0.7';
-        uncertaintyThreshold.style.backgroundColor = '#f8f9fa';
-        uncertaintyThreshold.style.color = '#6c757d';
-        uncertaintyThreshold.style.borderColor = '#ced4da';
+        uncertaintyInput.disabled = true;
+        uncertaintyInput.required = false;      
+        uncertaintyInput.style.opacity = '0.7';
+        uncertaintyInput.style.backgroundColor = '#f8f9fa';
     }
 }
 
