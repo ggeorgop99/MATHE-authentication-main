@@ -28,6 +28,17 @@ def clean_text(text):
     text = ' '.join(text.split())
     return text
 
+def clean_accent(text):
+    """Normalize Greek accents and convert to lowercase"""
+    replacements = {
+        'Ά': 'α', 'Έ': 'ε', 'Ί': 'ι', 'Ή': 'η', 'Ύ': 'υ', 'Ό': 'ο', 'Ώ': 'ω',
+        'ά': 'α', 'έ': 'ε', 'ί': 'ι', 'ή': 'η', 'ύ': 'υ', 'ό': 'ο', 'ώ': 'ω',
+        'ς': 'σ'
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    return text.lower()
+
 def topic_modelling_function(csv_filepath, no_topics, no_top_words, mode, 
                            max_df=0.95, min_df=2, max_features=1000,
                            l1_ratio=0.5, max_iter=300, init='nndsvd',
@@ -61,23 +72,72 @@ def topic_modelling_function(csv_filepath, no_topics, no_top_words, mode,
 
         # Text preprocessing
         tweets['text_processed'] = tweets['text'].astype(str).map(clean_text)
-        tweets['text_processed'] = tweets['text_processed'].map(lambda x: re.sub('[,\.!?]', '', x).lower())
-
-        def clean_accent(df_col):
-            return df_col.str.replace('Ά', 'Α').str.replace('Έ', 'Ε').str.replace('Ί', 'Ι') \
-                .str.replace('Ή', 'Η').str.replace('Ύ', 'Υ').str.replace('Ό', 'Ο') \
-                .str.replace('Ώ', 'Ω').str.replace('ά', 'α').str.replace('έ', 'ε') \
-                .str.replace('ί', 'ι').str.replace('ή', 'η').str.replace('ύ', 'υ') \
-                .str.replace('ό', 'ο').str.replace('ώ', 'ω').str.replace('ς', 'σ') \
-                .str.replace('\n', ' ').str.replace('rt', '')
-
-        tweets['text_processed'] = clean_accent(tweets['text_processed'])
+        tweets['text_processed'] = tweets['text_processed'].map(clean_accent)
         corpus = tweets['text_processed'].to_numpy()
 
         # Try to load Greek language model
         try:
             nlp = spacy.load('el_core_news_md')
-            stop_words = nlp.Defaults.stop_words.union({'http', 'https', 'rt', 'tco', 'amp'})
+            # Add common Greek stop words that might be missing
+            additional_stop_words = {
+                # Articles and basic pronouns
+                'ο', 'η', 'το', 'οι', 'οι', 'τα', 'τα', 'της', 'της', 'των', 'των',
+                'τη', 'την', 'τον', 'τους', 'τις', 'τησ', 'τησ', 'την', 'τον',
+                'τουσ', 'τουσ', 'τους', 'τους', 'τισ', 'τισ', 'τις', 'τις',
+                'ενα', 'ενας', 'μια', 'μιας', 'ενος', 'εναν', 'μιαν',
+                'οποιος', 'οποια', 'οποιο', 'οποιες', 'οποια', 'οποια',
+                'οποιοι', 'οποια', 'οποια', 'οποια', 'οποια', 'οποια', 'οποια', 'οποια',
+                
+                # Possessive pronouns
+                'μου', 'σου', 'του', 'της', 'μας', 'σας', 'τους', 'τις',
+                'μασ', 'μασ', 'σασ', 'σασ', 'τουσ', 'τουσ',
+                'εμενα', 'εσενα', 'αυτου', 'αυτης', 'εμας', 'εσας', 'αυτων',
+                'εμασ', 'εσασ', 'αυτουσ', 'αυτησ',
+                
+                # Demonstratives
+                'αυτο', 'αυτος', 'αυτη', 'αυτοι', 'αυτες', 'αυτα',
+                'εκεινο', 'εκεινος', 'εκεινη', 'εκεινοι', 'εκεινες', 'εκεινα',
+                'αυτοσ', 'αυτησ', 'εκεινοσ', 'εκεινησ',
+                
+                # Common verbs and auxiliaries
+                'ειναι', 'ειμαι', 'εισαι', 'ειμαστε', 'ειστε', 'ειναι',
+                'εχω', 'εχεις', 'εχει', 'εχουμε', 'εχετε', 'εχουν',
+                'και', 'ή', 'αλλα', 'ομως', 'ενω', 'γιατι', 'που',
+                'πωσ', 'πως', 'πως', 'πωσ',
+                
+                # Common prepositions and conjunctions
+                'απο', 'από', 'με', 'σε', 'στο', 'στη', 'στην', 'στον',
+                'στους', 'στις', 'στα', 'στοσ', 'στησ', 'στον',
+                'για', 'προς', 'μετα', 'μετά', 'πριν', 'οταν', 'όταν',
+                
+                # Common adverbs
+                'πολυ', 'πολύ', 'λιγο', 'λίγο', 'αρκετα', 'αρκετά',
+                'σχεδον', 'σχεδόν', 'πιθανο', 'πιθανό', 'πιθανοσ', 'πιθανόσ',
+                
+                # Social media specific
+                'rt', 'tco', 'amp', 'http', 'https', 'www',
+                
+                # Additional variations with σ instead of ς
+                'τησ', 'την', 'τον', 'τους', 'τις', 'τησ', 'την', 'τον',
+                'αυτοσ', 'αυτησ', 'εκεινοσ', 'εκεινησ', 'πιθανοσ', 'πιθανόσ',
+                'τουσ', 'τισ', 'μασ', 'σασ', 'πωσ',
+                
+                # Additional common words
+                'ολα', 'όλα', 'ολοι', 'όλοι', 'ολες', 'όλες',
+                'κανενας', 'κανένας', 'κανενα', 'κανένα', 'κανεμια', 'κανέμια',
+                'τιποτα', 'τίποτα', 'τιποτε', 'τίποτε',
+                'οπου', 'όπου', 'οταν', 'όταν', 'οσο', 'όσο',
+                'οπως', 'όπως', 'οσο', 'όσο', 'οπου', 'όπου',
+                
+                # Additional variations of common words
+                'τοσ', 'τοσ', 'τασ', 'τασ', 'τοι', 'τοι', 'ται', 'ται',
+                'οσ', 'οσ', 'ησ', 'ησ', 'οι', 'οι', 'αι', 'αι',
+                'εσ', 'εσ', 'εσυ', 'εσυ', 'εγω', 'εγω',
+                'αυτοσ', 'αυτησ', 'αυτοι', 'αυτες', 'αυτα',
+                'εκεινοσ', 'εκεινησ', 'εκεινοι', 'εκεινες', 'εκεινα',
+                'οποιοσ', 'οποιασ', 'οποιοι', 'οποιες', 'οποια'
+            }
+            stop_words = nlp.Defaults.stop_words.union(additional_stop_words)
         except OSError:
             print("\n" + "="*80)
             print("ERROR: Greek language model not found!")
@@ -89,12 +149,13 @@ def topic_modelling_function(csv_filepath, no_topics, no_top_words, mode,
             print("\n" + "="*80 + "\n")
             raise OSError("Greek language model not installed. Please follow the instructions above to install it.")
 
-        # Vectorization
+        # Vectorization with stricter parameters for stop words
         vectorizer = TfidfVectorizer(
             max_df=max_df,
             min_df=min_df,
             max_features=max_features,
-            stop_words=list(stop_words)
+            stop_words=list(stop_words),
+            token_pattern=r'(?u)\b\w\w+\b'  # Only match words with at least 2 characters
         )
         tfidf = vectorizer.fit_transform(corpus)
         feature_names = vectorizer.get_feature_names_out()
