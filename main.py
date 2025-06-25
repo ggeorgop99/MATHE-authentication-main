@@ -1012,5 +1012,10 @@ def download(filename):
         flash(f'Error downloading file: {str(e)}', 'error')
         return redirect(url_for('index'))
 
+@app.route('/guide')
+def guide():
+    """Guide and documentation page"""
+    return render_template('guide.html')
+
 if __name__ == '__main__':
     app.run(debug=True)

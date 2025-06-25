@@ -21,7 +21,7 @@ import sentimark  # Import the sentimark module
 
 # Available models for UI dropdown
 AVAILABLE_MODELS = [
-    "sentistrength",  # Add sentistrength as an option
+    "sentistrength",  
     "pharmSpellchecked",
     "pharm_translated_greek_spellchecked",
     "datasetSpellchecked_TL_On_pharmSpellchecked",
