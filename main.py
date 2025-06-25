@@ -262,7 +262,9 @@ def analyze():
                                              summary_result=analysis_results['summary_result'],
                                              wordcloud=wordcloud_filename,  # Pass the wordcloud filename
                                              available_models=sp.AVAILABLE_MODELS,
-                                             testing_methods=sp.TESTING_METHODS)
+                                             model_display_names=sp.MODEL_DISPLAY_NAMES,
+                                             testing_methods=sp.TESTING_METHODS,
+                                             testing_method_display_names=sp.TESTING_METHOD_DISPLAY_NAMES)
                     except Exception as e:
                         logger.error(f"Error processing file: {str(e)}")
                         flash(f'Error processing file: {str(e)}', 'danger')
@@ -373,7 +375,9 @@ def sentiment_analysis():
                             sentiment_results=analysis_data_for_template.get('sentiment_results'),
                             predictions_preview=analysis_data_for_template.get('predictions_preview'),
                             available_models=sp.AVAILABLE_MODELS,
+                            model_display_names=sp.MODEL_DISPLAY_NAMES,
                             testing_methods=sp.TESTING_METHODS,
+                            testing_method_display_names=sp.TESTING_METHOD_DISPLAY_NAMES,
                             active_tab='sentiment',
                             wordcloud=wordcloud_filename)  # Add wordcloud filename
     except Exception as e:
@@ -543,7 +547,9 @@ def topic_modelling_form():
                              sentiment_results=analysis_results.get('sentiment_results'),
                              predictions_preview=analysis_results.get('predictions_preview'),
                              available_models=sp.AVAILABLE_MODELS,
+                             model_display_names=sp.MODEL_DISPLAY_NAMES,
                              testing_methods=sp.TESTING_METHODS,
+                             testing_method_display_names=sp.TESTING_METHOD_DISPLAY_NAMES,
                              active_tab='topic',
                              wordcloud=wordcloud_filename)  # Add wordcloud filename
     except Exception as e:
@@ -672,7 +678,9 @@ def topic_summary():
                             sentiment_results=analysis_results.get('sentiment_results'),
                             predictions_preview=analysis_results.get('predictions_preview'),
                             available_models=sp.AVAILABLE_MODELS,
+                            model_display_names=sp.MODEL_DISPLAY_NAMES,
                             testing_methods=sp.TESTING_METHODS,
+                            testing_method_display_names=sp.TESTING_METHOD_DISPLAY_NAMES,
                             active_tab='topic',
                             wordcloud=wordcloud_filename)  # Add wordcloud filename
                             
@@ -877,7 +885,9 @@ def topic_sentiment():
                             sentiment_results=analysis_results.get('sentiment_results'),
                             predictions_preview=analysis_results.get('predictions_preview'),
                             available_models=sp.AVAILABLE_MODELS,
+                            model_display_names=sp.MODEL_DISPLAY_NAMES,
                             testing_methods=sp.TESTING_METHODS,
+                            testing_method_display_names=sp.TESTING_METHOD_DISPLAY_NAMES,
                             active_tab='topic',
                             wordcloud=wordcloud_filename)
                             

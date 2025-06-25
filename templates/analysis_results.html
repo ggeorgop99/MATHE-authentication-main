@@ -946,16 +946,16 @@
                           <div class="sentiment-config d-flex align-items-center" style="gap: 0.5rem;">
                             <select class="form-control form-control-sm" name="model_name" style="width: auto; min-width: 150px;" onchange="toggleTopicModelFields(this)">
                               {% for model in available_models %}
-                              <option value="{{ model }}">{{ model }}</option>
+                              <option value="{{ model }}">{{ model_display_names[model] }}</option>
                               {% endfor %}
                             </select>
-                            <div class="neural-model-fields d-inline-flex align-items-center" style="display: none; gap: 0.5rem;">
-                              <select class="form-control form-control-sm" name="testing_method" style="width: auto; min-width: 100px;" onchange="toggleTopicUncertaintyThreshold(this)">
+                            <div class="neural-model-fields d-inline-block" style="display: none;">
+                              <select class="form-control form-control-sm mb-3" name="testing_method" style="width: auto; min-width: 100px;" onchange="toggleTopicUncertaintyThreshold(this)">
                                 {% for method in testing_methods %}
-                                <option value="{{ method }}">{{ method|upper }}</option>
+                                <option value="{{ method }}">{{ testing_method_display_names[method] }}</option>
                                 {% endfor %}
                               </select>
-                              <div class="uncertainty-threshold-field d-inline-flex align-items-center" style="display: none; gap: 0.25rem;">
+                              <div class="uncertainty-threshold-field mt-2" style="display: none;">
                                 <input type="number" 
                                        class="form-control form-control-sm" 
                                        name="uncertainty_threshold" 
@@ -965,8 +965,8 @@
                                        max="0.5" 
                                        style="width: 80px;"
                                        disabled>
-                                <small class="form-text text-muted" style="white-space: nowrap;">
-                                  Threshold (0.05-0.5)
+                                <small class="form-text text-muted d-block mt-1">
+                                  Uncertainty threshold (0.05-0.5)
                                 </small>
                               </div>
                             </div>
@@ -1345,7 +1345,7 @@
                 <label for="model_name">Select Model</label>
                 <select class="form-control" id="model_name" name="model_name" required onchange="toggleModelFields()">
                   {% for model in available_models %}
-                  <option value="{{ model }}">{{ model }}</option>
+                  <option value="{{ model }}">{{ model_display_names[model] }}</option>
                   {% endfor %}
                 </select>
               </div>
@@ -1355,7 +1355,7 @@
                   <label for="testing_method">Testing Method</label>
                   <select class="form-control" id="testing_method" name="testing_method" onchange="toggleUncertaintyThreshold()">
                     {% for method in testing_methods %}
-                    <option value="{{ method }}">{{ method|upper }}</option>
+                    <option value="{{ method }}">{{ testing_method_display_names[method] }}</option>
                     {% endfor %}
                   </select>
                 </div>
@@ -1539,10 +1539,10 @@ function toggleTopicModelFields(selectElement) {
             newNeuralFields.innerHTML = `
                 <select class="form-control d-inline-block" name="testing_method" style="width: auto;" onchange="toggleTopicUncertaintyThreshold(this)">
                     {% for method in testing_methods %}
-                    <option value="{{ method }}">{{ method|upper }}</option>
+                    <option value="{{ method }}">{{ testing_method_display_names[method] }}</option>
                     {% endfor %}
                 </select>
-                <div class="uncertainty-threshold-field d-inline-flex align-items-center" style="display: none; gap: 0.25rem;">
+                <div class="uncertainty-threshold-field mt-2" style="display: none;">
                     <input type="number" 
                            class="form-control d-inline-block" 
                            name="uncertainty_threshold" 
@@ -1552,7 +1552,7 @@ function toggleTopicModelFields(selectElement) {
                            max="0.5" 
                            style="width: 80px;"
                            disabled>
-                    <small class="form-text text-muted" style="white-space: nowrap;">
+                    <small class="form-text text-muted d-block mt-1">
                         Uncertainty threshold (0.05-0.5)
                     </small>
                 </div>
@@ -1685,10 +1685,10 @@ document.addEventListener('DOMContentLoaded', function() {
           newNeuralFields.innerHTML = `
             <select class="form-control d-inline-block" name="testing_method" style="width: auto;" onchange="toggleTopicUncertaintyThreshold(this)">
               {% for method in testing_methods %}
-              <option value="{{ method }}">{{ method|upper }}</option>
+              <option value="{{ method }}">{{ testing_method_display_names[method] }}</option>
               {% endfor %}
             </select>
-            <div class="uncertainty-threshold-field d-inline-flex align-items-center" style="display: none; gap: 0.25rem;">
+            <div class="uncertainty-threshold-field mt-2" style="display: none;">
               <input type="number" 
                      class="form-control d-inline-block" 
                      name="uncertainty_threshold" 
@@ -1698,7 +1698,7 @@ document.addEventListener('DOMContentLoaded', function() {
                      max="0.5" 
                      style="width: 80px;"
                      disabled>
-              <small class="form-text text-muted" style="white-space: nowrap;">
+              <small class="form-text text-muted d-block mt-1">
                 Uncertainty threshold (0.05-0.5)
               </small>
             </div>

@@ -30,8 +30,25 @@ AVAILABLE_MODELS = [
     "datasetAndPharmSpellchecked"
 ]
 
+# Display names for UI dropdown (more descriptive)
+MODEL_DISPLAY_NAMES = {
+    "sentistrength": "SentiStrength (Rule-based)",
+    "pharmSpellchecked": "PharmSpellchecked (Social Media/Hate Speech)",
+    "pharm_translated_greek_spellchecked": "Pharm Translated Greek (Sociopolitical in smaller scale)",
+    "datasetSpellchecked_TL_On_pharmSpellchecked": "Skroutz Transfer Learning on Pharm (General but with more domain knowledge)",
+    "datasetSpellchecked": "Large Homebrew Skroutz Scraped Dataset (Product Reviews)",
+    "datasetAndPharmTranslatedSpellchecked": "Skroutz & Pharm Translated (General)",
+    "datasetAndPharmSpellchecked": "Skroutz & Pharm Combined (Broad Coverage)"
+}
+
 # Available testing methods for UI dropdown
 TESTING_METHODS = ["classic", "mc"]
+
+# Display names for testing methods dropdown (more descriptive)
+TESTING_METHOD_DISPLAY_NAMES = {
+    "classic": "Classic Neural Network Prediction",
+    "mc": "Monte Carlo Dropout Prediction"
+}
 
 def mc_dropout_predict(model, x, n_samples=100):
     """
