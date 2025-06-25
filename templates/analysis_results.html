@@ -1333,8 +1333,8 @@
         <!-- Sentiment Analysis Tab -->
         <div class="tab-pane fade {% if active_tab == 'sentiment' %}show active{% endif %}" id="sentiment" role="tabpanel" aria-labelledby="sentiment-tab">
           <div class="sentiment-analysis-form">
-            <h2 class="text-danger">
-              <i class="fa-solid fa-heart"></i> Sentiment Analysis Configuration
+            <h2 style="color: var(--primary-color);">
+              <i class="fa-solid fa-heart" style="color: var(--primary-color);"></i> Sentiment Analysis Configuration
             </h2>
             <form method="POST" action="{{ url_for('sentiment_analysis') }}">
               <input type="hidden" name="filepath" value="{{ filepath }}">
