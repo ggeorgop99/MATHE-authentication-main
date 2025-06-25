@@ -87,13 +87,29 @@
   }
 
   .testimonial-card::before {
-    content: '"';
-    font-size: 4rem;
+    content: '\201C'; /* Unicode for left double quotation mark */
+    font-size: 3.5rem;
     color: var(--primary-color);
-    opacity: 0.2;
+    opacity: 0.25;
     position: absolute;
-    top: 10px;
-    left: 20px;
+    top: 18px;
+    left: 18px;
+    line-height: 1;
+    font-family: serif;
+    pointer-events: none;
+  }
+
+  .testimonial-card::after {
+    content: '\201D'; /* Unicode for right double quotation mark */
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    opacity: 0.18;
+    position: absolute;
+    bottom: 18px;
+    right: 18px;
+    line-height: 1;
+    font-family: serif;
+    pointer-events: none;
   }
 
   .testimonial-text {
@@ -151,6 +167,16 @@
   .section-title p {
     color: var(--accent-color);
     font-size: 1.2rem;
+  }
+
+  .testimonial-quote-close {
+    font-family: serif;
+    font-size: 2.2rem;
+    color: var(--primary-color);
+    opacity: 0.18;
+    vertical-align: bottom;
+    margin-left: 2px;
+    line-height: 1;
   }
 </style>
 {% endblock %}
@@ -256,19 +282,19 @@
       <div class="row">
         <div class="col-md-4">
           <div class="testimonial-card">
-            <p class="testimonial-text">"The topic modeling feature has been valuable for our research on media content analysis. The platform's focus on Greek text makes it particularly useful for our work."</p>
+            <p class="testimonial-text">The topic modeling feature has been valuable for our research on media content analysis. The platform's focus on Greek text makes it particularly useful for our work.<span class="testimonial-quote-close">”</span></p>
             <p class="testimonial-author">- Dr. Nikos Vryzas</p>
           </div>
         </div>
         <div class="col-md-4">
           <div class="testimonial-card">
-            <p class="testimonial-text">"As a PhD student, I appreciate the platform's ability to handle research data efficiently. The analysis tools have helped streamline my thesis work."</p>
+            <p class="testimonial-text">As a PhD student, I appreciate the platform's ability to handle research data efficiently. The analysis tools have helped streamline my thesis work.<span class="testimonial-quote-close">”</span></p>
             <p class="testimonial-author">- PHD Candidate Thomi Baltzi</p>
           </div>
         </div>
         <div class="col-md-4">
           <div class="testimonial-card">
-            <p class="testimonial-text">"The sentiment analysis feature has provided valuable insights for our research on media content. The accuracy in Greek text analysis is particularly impressive."</p>
+            <p class="testimonial-text">The sentiment analysis feature has provided valuable insights for our research on media content. The accuracy in Greek text analysis is particularly impressive.<span class="testimonial-quote-close">”</span></p>
             <p class="testimonial-author">- Professor Charalampos Dimoulas, M3C Research Group</p>
           </div>
         </div>
