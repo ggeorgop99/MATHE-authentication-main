@@ -95,7 +95,18 @@ def perform_sentiment_analysis(file_name):
 
         # Load original data for reference
         df_original = pd.read_csv(original_dataset_path)
-        original_texts = df_original.iloc[:, 0].values  # Get the first column (original text)
+        
+        # Handle case where original and preprocessed files have different numbers of rows
+        # This can happen when preprocessing filters out empty rows
+        if len(df_original) != len(df_preprocessed):
+            print(f"Warning: Original file has {len(df_original)} rows, preprocessed file has {len(df_preprocessed)} rows")
+            print("This is likely due to preprocessing filtering out empty rows.")
+            print("Using only the preprocessed data for analysis.")
+            
+            # Use the preprocessed text as both original and preprocessed
+            original_texts = X_test.copy()
+        else:
+            original_texts = df_original.iloc[:, 0].values  # Get the first column (original text)
 
         # Load lexicons
         print("Loading lexicons...")
