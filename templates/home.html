@@ -5,10 +5,10 @@
 {% block extra_styles %}
 <style>
   .hero-section {
-    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('../static/hero-bg.jpg');
+    background: linear-gradient(rgba(30, 187, 215, 0.7), rgba(113, 199, 236, 0.7)), url('../static/hero-bg.jpg');
     background-size: cover;
     background-position: center;
-    color: white;
+    color: #005073;
     padding: 150px 0;
     margin-bottom: 50px;
     position: relative;
@@ -21,7 +21,7 @@
     left: 0;
     right: 0;
     height: 100px;
-    background: linear-gradient(to top, #f5f5f5, transparent);
+    background: linear-gradient(to top, var(--secondary-color), transparent);
   }
 
   .feature-card {
@@ -29,14 +29,14 @@
     border-radius: 12px;
     padding: 40px 30px;
     margin-bottom: 30px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 80, 115, 0.1);
     transition: all 0.3s ease;
     height: 100%;
   }
 
   .feature-card:hover {
     transform: translateY(-10px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 15px rgba(0, 80, 115, 0.2);
   }
 
   .feature-icon {
@@ -51,8 +51,8 @@
   }
 
   .stats-section {
-    background-color: var(--primary-color);
-    color: white;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    color: #fff;
     padding: 80px 0;
     margin: 50px 0;
   }
@@ -107,15 +107,15 @@
   }
 
   .cta-section {
-    background: linear-gradient(135deg, var(--primary-color), #600000);
-    color: white;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    color: #fff;
     padding: 100px 0;
     text-align: center;
     margin-top: 50px;
   }
 
   .cta-section .btn-primary {
-    background-color: white;
+    background-color: #fff;
     color: var(--primary-color);
     border: none;
     margin-top: 30px;
@@ -145,6 +145,7 @@
     font-size: 2.5rem;
     font-weight: 700;
     margin-bottom: 15px;
+    color: var(--primary-color-dark);
   }
 
   .section-title p {

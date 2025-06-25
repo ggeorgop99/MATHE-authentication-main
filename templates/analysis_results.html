@@ -9,7 +9,7 @@
 <style>
   .results-section {
     padding: 60px 0;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--ciel-light) 100%);
     min-height: calc(100vh - 200px);
   }
 
@@ -18,7 +18,7 @@
     border-radius: 16px;
     padding: 40px;
     margin-bottom: 30px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 20px rgba(0, 80, 115, 0.05);
     transition: transform 0.3s ease;
   }
 
@@ -39,7 +39,7 @@
   }
 
   .results-header p {
-    color: #6c757d;
+    color: var(--accent-color);
     font-size: 1.1rem;
   }
 
@@ -93,16 +93,16 @@
   }
 
   .preview-table tr:nth-child(even) {
-    background-color: #f8f9fa;
+    background-color: var(--ciel-light);
   }
 
   .preview-table tr:hover {
-    background-color: #f0f2f5;
+    background-color: var(--secondary-color);
   }
 
   .preview-table td:first-child {
     font-weight: 500;
-    color: #2c3e50;
+    color: var(--primary-color-dark);
     white-space: nowrap;
   }
 
@@ -134,7 +134,7 @@
     border-radius: 12px;
     padding: 25px;
     margin-bottom: 20px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 5px 15px rgba(0, 80, 115, 0.05);
     transition: transform 0.3s ease;
     height: 100%;
   }
@@ -157,13 +157,13 @@
 
   .column-card p {
     margin-bottom: 12px;
-    color: #4a5568;
+    color: var(--accent-color);
     display: flex;
     align-items: center;
   }
 
   .column-card strong {
-    color: #2d3748;
+    color: var(--primary-color-dark);
     margin-right: 5px;
   }
 
@@ -173,7 +173,7 @@
     padding: 40px;
     background: #fff;
     border-radius: 16px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 20px rgba(0, 80, 115, 0.1);
   }
 
   .wordcloud-section h3 {
@@ -193,7 +193,7 @@
     max-width: 100%;
     height: auto;
     border-radius: 12px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 16px rgba(0, 80, 115, 0.1);
     transition: transform 0.3s ease;
   }
 
@@ -206,7 +206,7 @@
     border-radius: 16px;
     padding: 40px;
     margin-top: 40px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 20px rgba(0, 80, 115, 0.05);
   }
 
   .topic-modelling-form h2 {
@@ -226,7 +226,7 @@
   }
 
   .form-group label {
-    color: #2d3748;
+    color: var(--primary-color-dark);
     font-weight: 500;
     margin-bottom: 8px;
   }
@@ -234,7 +234,7 @@
   .form-control {
     border-radius: 8px;
     padding: 12px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--accent-color);
     transition: all 0.3s ease;
     font-size: 1rem;
     min-height: 45px;
@@ -264,7 +264,7 @@
 
   select.form-control:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    box-shadow: 0 0 0 3px rgba(113, 199, 236, 0.1);
   }
 
   .btn-primary {
@@ -276,6 +276,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
   }
 
   .btn-primary i {
@@ -284,13 +287,14 @@
 
   .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 12px rgba(0, 80, 115, 0.15);
+    background: var(--primary-color-dark);
   }
 
   .topic-modelling-results {
     margin-top: 40px;
     padding: 30px;
-    background: #f8f9fa;
+    background: var(--ciel-light);
     border-radius: 12px;
     border-left: 4px solid var(--primary-color);
   }
@@ -312,7 +316,7 @@
     padding: 30px;
     background: white;
     border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 5px 15px rgba(0, 80, 115, 0.05);
   }
 
   .stats-section h3 {
@@ -328,7 +332,7 @@
   }
 
   .stat-card {
-    background: #f8f9fa;
+    background: var(--ciel-light);
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 20px;
@@ -336,13 +340,13 @@
   }
 
   .stat-card h4 {
-    color: #2d3748;
+    color: var(--primary-color-dark);
     font-size: 1.5rem;
     margin-bottom: 10px;
   }
 
   .stat-card p {
-    color: #6c757d;
+    color: var(--primary-color);
     margin: 0;
   }
 
@@ -383,7 +387,7 @@
     border-radius: 16px;
     padding: 30px;
     margin-top: 40px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 20px rgba(0, 80, 115, 0.05);
   }
 
   .topic-modelling-results h3 {
@@ -415,7 +419,7 @@
   }
 
   .topic-card {
-    background: #f8f9fa;
+    background: var(--ciel-light);
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
@@ -444,12 +448,12 @@
     padding: 6px 12px;
     border-radius: 20px;
     font-size: 0.9rem;
-    color: #2d3748;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    color: var(--primary-color-dark);
+    box-shadow: 0 2px 4px rgba(0, 80, 115, 0.05);
   }
 
   .metric-card {
-    background: #f8f9fa;
+    background: var(--ciel-light);
     border-radius: 12px;
     padding: 20px;
     text-align: center;
@@ -470,12 +474,12 @@
   .metric-value {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #2d3748;
+    color: var(--primary-color-dark);
     margin-bottom: 10px;
   }
 
   .metric-description {
-    color: #6c757d;
+    color: var(--primary-color);
     font-size: 0.9rem;
     margin: 0;
   }
@@ -484,7 +488,7 @@
     background: white;
     border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 5px 15px rgba(0, 80, 115, 0.05);
   }
 
   .plot-container img {
@@ -512,7 +516,7 @@
     padding: 40px;
     background: #fff;
     border-radius: 16px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 20px rgba(0, 80, 115, 0.05);
   }
 
   .summary-section h3 {
@@ -528,28 +532,28 @@
   }
 
   .summary-content {
-    background: #f8f9fa;
+    background: var(--ciel-light);
     padding: 25px;
     border-radius: 12px;
     margin-bottom: 20px;
   }
 
   .summary-content p {
-    color: #2d3748;
+    color: var(--primary-color-dark);
     font-size: 1.1rem;
     line-height: 1.6;
     margin-bottom: 0;
   }
 
   .summary-meta {
-    color: #6c757d;
+    color: var(--accent-color);
     font-size: 0.9rem;
   }
 
   .summary-error {
-    color: #dc3545;
+    color: var(--danger-color);
     padding: 15px;
-    background: #fff5f5;
+    background: #ffeded;
     border-radius: 8px;
     margin-bottom: 20px;
   }
@@ -559,7 +563,7 @@
     border-radius: 16px;
     padding: 40px;
     margin-top: 40px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 20px rgba(0, 80, 115, 0.05);
   }
 
   .sentiment-results {
@@ -567,7 +571,7 @@
   }
 
   .sentiment-summary {
-    background: #f8f9fa;
+    background: var(--ciel-light);
     border-radius: 12px;
     padding: 25px;
     margin-bottom: 20px;
@@ -590,11 +594,11 @@
     padding: 20px;
     border-radius: 10px;
     text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px rgba(0, 80, 115, 0.05);
   }
 
   .stat-card h5 {
-    color: #2d3748;
+    color: var(--primary-color-dark);
     margin-bottom: 10px;
   }
 
@@ -616,7 +620,7 @@
     background: white;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 80, 115, 0.1);
   }
 
   .plot-card h5 {
@@ -630,18 +634,18 @@
     width: 100%;
     height: auto;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px rgba(0, 80, 115, 0.05);
   }
 
   /* Add styles for tabs */
   .nav-tabs {
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid var(--accent-color);
     margin-bottom: 30px;
   }
 
   .nav-tabs .nav-link {
     border: none;
-    color: #6c757d;
+    color: var(--accent-color);
     font-weight: 500;
     padding: 15px 25px;
     margin-right: 5px;
@@ -652,7 +656,7 @@
   .nav-tabs .nav-link:hover {
     border: none;
     color: var(--primary-color);
-    background-color: #f8f9fa;
+    background-color: var(--ciel-light);
   }
 
   .nav-tabs .nav-link.active {
@@ -688,9 +692,6 @@
 
   /* Add specific styles for the info icon */
   .info-icon {
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    content: "\f05a";
     color: var(--primary-color);
     margin-right: 8px;
     display: inline-block;
