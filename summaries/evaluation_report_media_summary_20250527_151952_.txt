@@ -1,0 +1,8 @@
+CSV file: data/media.csv
+Summary file: summaries/media_summary_20250527_151952.txt
+
+Number of words in original text: 77482
+Number of words in summary: 311
+Compression Ratio: 0.004
+Compression Percentage: 99.60%
+Redundancy Score: 0.379

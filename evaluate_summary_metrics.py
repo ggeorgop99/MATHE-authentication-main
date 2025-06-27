@@ -49,7 +49,7 @@ def main(csv_path, text_column, summary_txt_path):
     print(f"📦 Compression Percentage: {compression_percent:.2f}%")
     print(f"🔁 Redundancy Score: {redundancy:.3f} (ratio of repeated words in the summary)")
 
-    out_log = os.path.splitext(summary_txt_path)[0] + "_evaluation_report.txt"
+    out_log = "evaluation_report_" + os.path.splitext(summary_txt_path)[0] + ".txt"
     with open(out_log, "w", encoding="utf-8") as out:
         out.write(f"CSV file: {csv_path}\n")
         out.write(f"Summary file: {summary_txt_path}\n\n")

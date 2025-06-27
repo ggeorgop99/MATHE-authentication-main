@@ -1,0 +1,8 @@
+CSV file: files/temp/media_topics3_words5_tfidf_maxdf0.95_mindf2_maxfeat1000_l10.5_iter300_nndsvd_topic_1.csv
+Summary file: summaries/media_topics3_words5_tfidf_maxdf0.95_mindf2_maxfeat1000_l10.5_iter300_nndsvd_topic_1_summary_20250603_170042.txt
+
+Number of words in original text: 24022
+Number of words in summary: 112
+Compression Ratio: 0.005
+Compression Percentage: 99.53%
+Redundancy Score: 0.179
