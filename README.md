@@ -1,4 +1,4 @@
-# MATHE Text Analysis Platform
+# iMedius Text Analysis Platform
 
 A Flask-based web application for topic modeling, sentiment analysis, and text processing with a focus on Greek language content. This project integrates various machine learning techniques for analyzing journalistic content, including emotional classification and annotation.
 

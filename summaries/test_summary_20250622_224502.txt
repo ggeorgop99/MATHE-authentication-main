@@ -1,0 +1,9 @@
+--- Summary Report ---
+                            Generation Date: 2025-06-22 22:45:02
+                            Input Data File: files/temp/test.csv
+                            Summarization Model: IMISLab/GreekT5-mt5-small-greeksum
+                            Number of Texts: 14
+                            Summarization Stages: 1
+
+                            --- Summary Text ---
+                            Στο μεταβαλλόμενο περιβάλλον της σύγχρονης εποχής η υιοθέτηση πρακτικών διαχείρισης κινδύνων αποτελεί μονόδρομο για τη βιώσιμη ανάπτυξη. Η κλιματική αλλαγή θα αυξήσει τα επόμενα χρόνια τις δασικές πυρκαγιές παγκοσμίως, ιδίως στη Μεσόγειο.

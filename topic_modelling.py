@@ -67,6 +67,10 @@ def topic_modelling_function(csv_filepath, no_topics, no_top_words, mode,
         # Read data
         tweets = pd.read_csv(csv_filepath)
         
+        # Remove empty rows at the beginning to prevent issues later
+        tweets = tweets[tweets['text'].astype(bool)]
+        print(f"Removed empty rows. Dataset now has {len(tweets)} rows.")
+        
         # Get the original filename without extension
         original_filename = os.path.splitext(os.path.basename(csv_filepath))[0]
 

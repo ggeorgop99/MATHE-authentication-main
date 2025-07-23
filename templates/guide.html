@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Guide & Documentation - iMedius Text Analysis Platform{% endblock %}
+
+{% block extra_styles %}
+<style>
+  .guide-section {
+    padding: 60px 0;
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--ciel-light) 100%);
+  }
+  .guide-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 40px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 12px rgba(0,80,115,0.08);
+  }
+  .guide-card h2, .guide-card h3 {
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 18px;
+  }
+  .guide-card ul, .guide-card ol {
+    margin-bottom: 1.5rem;
+  }
+  .guide-glossary-term {
+    color: var(--primary-color-dark);
+    font-weight: 600;
+  }
+  .guide-glossary-def {
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="guide-section">
+  <div class="container">
+    <div class="guide-card mb-5">
+      <h2><i class="fas fa-book-open me-2"></i> Guide & Documentation</h2>
+      <p>Welcome to the iMedius Text Analysis Platform! This guide will help you get started, understand the available features, and explain the scientific methods and terms used throughout the app.</p>
+    </div>
+
+    <div class="guide-card">
+      <h3>Getting Started</h3>
+      <ol>
+        <li>Go to <b>Analyze</b> and upload your CSV file. The file should have at least one column named <code>text</code> (and optionally <code>sentiment</code> for labeled data).</li>
+        <li>Choose the type of analysis you want: <b>Topic Modeling</b>, <b>Sentiment Analysis</b>, or <b>Text Summarization</b>.</li>
+        <li>Configure the parameters as needed, or use the defaults for a quick start.</li>
+        <li>View your results in the interactive tabs: Data Preview, Word Cloud, Summary, Topic Modelling, and Sentiment Analysis.</li>
+      </ol>
+    </div>
+
+    <div class="guide-card">
+      <h3>Data Upload</h3>
+      <ul>
+        <li>Your CSV should contain a <code>text</code> column with the text to analyze.</li>
+        <li>For sentiment analysis training, add a <code>sentiment</code> column with labels (e.g., positive, negative, neutral).</li>
+        <li>For best results, use UTF-8 encoding and clean your data of irrelevant symbols or empty rows.</li>
+      </ul>
+    </div>
+
+    <div class="guide-card">
+      <h3>Analysis Methods</h3>
+      <ul>
+        <li><b>Topic Modeling</b>:
+          <ul>
+            <li><span class="guide-glossary-term">LDA (Latent Dirichlet Allocation):</span> A probabilistic model that discovers topics in a collection of texts by grouping words that frequently appear together. <b>Best for:</b> General topic discovery, interpretable topics, and when you want to see word distributions per topic.</li>
+            <li><span class="guide-glossary-term">NMF (Non-negative Matrix Factorization):</span> A linear algebra-based method for extracting topics by factorizing the document-term matrix into interpretable components. Uses TF-IDF as input for better topic quality. <b>Best for:</b> Shorter texts, when you want more distinct, non-overlapping topics, or when using TF-IDF features.</li>
+            <li><span class="guide-glossary-term">CoreX:</span> A topic modeling method that uses anchor words to guide topic discovery, providing more interpretable and stable topics with less overlap between topics. <b>Best for:</b> When you have domain expertise and can identify key anchor words, when you want more interpretable topics with less overlap, for specialized domains like medical, legal, or technical documents, and when you need more stable topic assignments across different runs.</li>
+          </ul>
+        </li>
+        <li><b>Sentiment Analysis</b>:
+          <ul>
+            <li><b>Classic:</b> Standard prediction using the selected model. Fast and suitable for most use cases.</li>
+            <li><b>MC (Monte Carlo Dropout):</b> Uses dropout at prediction time to estimate model uncertainty by running multiple forward passes. <b>Best for:</b> When you want to know how confident the model is in its predictions.</li>
+            <li><b>Uncertainty Threshold:</b> When using MC dropout, this parameter lets you set a threshold for how much uncertainty is allowed before a prediction is considered 'uncertain.' Lower values mean stricter filtering; higher values allow more uncertain predictions.</li>
+            <li><b>Rule-based (SentiStrength):</b> Uses a dictionary and rules to estimate sentiment strength, especially for short texts.</li>
+          </ul>
+        </li>
+        <li><b>Text Summarization</b>:
+          <ul>
+            <li>Automatically generates concise abstractive summaries of your text data using the <b>IMISLab/GreekT5-mt5-small-greeksum</b> model, which is specifically fine-tuned for Greek text summarization.</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <div class="guide-card">
+      <h3>Available Machine Learning Models</h3>
+      <ul>
+        <li><b>datasetSpellchecked:</b> Trained on a homebrew scrape from the Skroutz Greek product review dataset. <b>Best for:</b> Product reviews, general Greek sentiment tasks.</li>
+        <li><b>pharmSpellchecked:</b> Trained on a Greek hate speech tweets dataset. <b>Best for:</b> Social media, hate speech, Greek text.</li>
+        <li><b>datasetTLonPharm:</b> The datasetSpellchecked model, further fine-tuned (transfer learning) on the pharm dataset. <b>Best for:</b> When you want a model that generalizes well but is also adapted to the social media, hate speech and sociopolitical domain.</li>
+        <li><b>datasetAndPharmSpellchecked:</b> Trained on a combination of the above datasets for broader coverage.</li>
+        <li><b>datasetAndPharmTranslatedSpellchecked:</b> Trained on translated and spellchecked versions of the above datasets for improved robustness.</li>
+        <li><b>pharm_translated_greek_spellchecked:</b> Trained on translated, spellchecked sociopolitical and hate speech tweets for maximum domain adaptation.</li>
+        <li><b>sentistrength:</b> A rule-based model for quick, language-agnostic sentiment estimation.</li>
+      </ul>
+      <p class="mt-3"><b>Tip:</b> For product reviews, use <b>datasetSpellchecked</b>. For social media, hate speech and sociopolitical content, use <b>pharmSpellchecked</b> or <b>datasetTLonPharm</b>. For general Greek text, try <b>datasetAndPharmSpellchecked</b> or <b>datasetAndPharmTranslatedSpellchecked</b>.</p>
+    </div>
+
+    <div class="guide-card">
+      <h3>Glossary of Scientific Terms</h3>
+      <div class="guide-glossary-term">LDA (Latent Dirichlet Allocation)</div>
+      <div class="guide-glossary-def">A topic modeling technique that assumes each document is a mixture of topics and each topic is a mixture of words. Useful for discovering hidden thematic structure in large text collections.</div>
+      <div class="guide-glossary-term">NMF (Non-negative Matrix Factorization)</div>
+      <div class="guide-glossary-def">A matrix factorization method that decomposes the document-term matrix into non-negative factors, revealing interpretable topics.</div>
+      <div class="guide-glossary-term">TF-IDF (Term Frequency-Inverse Document Frequency)</div>
+      <div class="guide-glossary-def">A numerical statistic that reflects how important a word is to a document in a collection. Used for weighting words in topic modeling and other analyses.</div>
+      <div class="guide-glossary-term">CoreX</div>
+      <div class="guide-glossary-def">A topic modeling method that uses anchor words to guide topic discovery, providing more interpretable and stable topics with less overlap between topics. Best for specialized domains (medical, legal, technical), when you have domain expertise to identify key terms, and when you need consistent topic assignments across multiple runs.</div>
+      <div class="guide-glossary-term">Sentiment Analysis</div>
+      <div class="guide-glossary-def">The process of determining the emotional tone behind a body of text, classifying it as positive, negative, or neutral.</div>
+      <div class="guide-glossary-term">SentiStrength</div>
+      <div class="guide-glossary-def">A rule-based sentiment analysis tool that estimates the strength of positive and negative sentiment in short texts.</div>
+      <div class="guide-glossary-term">Word Cloud</div>
+      <div class="guide-glossary-def">A visual representation of word frequency in your data, where more frequent words appear larger.</div>
+      <div class="guide-glossary-term">Preprocessing</div>
+      <div class="guide-glossary-def">The steps taken to clean and prepare text data for analysis, such as removing stopwords, punctuation, and normalizing case.</div>
+      <div class="guide-glossary-term">Abstractive Summary</div>
+      <div class="guide-glossary-def">A type of text summarization that generates new sentences to capture the main ideas, rather than just extracting existing sentences. The summary may contain words and phrases not present in the original text, making it more concise and readable.</div>
+    </div>
+
+    <div class="guide-card">
+      <h3>Tips & Best Practices</h3>
+      <ul>
+        <li>Review your data before uploading to ensure quality results.</li>
+        <li>Experiment with different topic modeling parameters for deeper insights.</li>
+        <li>Use the <b>Contribute</b> page to help improve the platform by submitting datasets or annotations.</li>
+        <li>Check the <b>About</b> page for more information about the research team and project.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+{% endblock %} 

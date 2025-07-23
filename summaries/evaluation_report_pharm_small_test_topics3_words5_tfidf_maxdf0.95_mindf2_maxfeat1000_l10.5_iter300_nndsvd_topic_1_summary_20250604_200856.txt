@@ -1,0 +1,8 @@
+CSV file: files/temp/pharm_small_test_topics3_words5_tfidf_maxdf0.95_mindf2_maxfeat1000_l10.5_iter300_nndsvd_topic_1.csv
+Summary file: summaries/pharm_small_test_topics3_words5_tfidf_maxdf0.95_mindf2_maxfeat1000_l10.5_iter300_nndsvd_topic_1_summary_20250604_200856.txt
+
+Number of words in original text: 1102
+Number of words in summary: 137
+Compression Ratio: 0.124
+Compression Percentage: 87.57%
+Redundancy Score: 0.204

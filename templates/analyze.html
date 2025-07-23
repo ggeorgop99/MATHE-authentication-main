@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}MATHE Text Analysis Platform - Upload & Analyze{% endblock %}
+{% block title %}iMedius Text Analysis Platform - Upload & Analyze{% endblock %}
 
 {% block extra_styles %}
 <style>
   .analyze-section {
     padding: 60px 0;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--ciel-light) 100%);
     min-height: calc(100vh - 200px);
   }
 
@@ -15,7 +15,7 @@
     border-radius: 16px;
     padding: 40px;
     margin-bottom: 30px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 20px rgba(0, 80, 115, 0.05);
     transition: transform 0.3s ease;
   }
 
@@ -36,7 +36,7 @@
   }
 
   .analyze-header p {
-    color: #6c757d;
+    color: var(--accent-color);
     font-size: 1.1rem;
     max-width: 600px;
     margin: 0 auto;
@@ -46,14 +46,14 @@
     background: #fff;
     border-radius: 12px;
     padding: 30px;
-    border: 2px dashed #dee2e6;
+    border: 2px dashed var(--accent-color);
     transition: all 0.3s ease;
     cursor: pointer;
   }
 
   .upload-section:hover {
     border-color: var(--primary-color);
-    background: #f8f9fa;
+    background: var(--ciel-light);
   }
 
   .upload-icon {
@@ -63,7 +63,7 @@
   }
 
   .upload-text {
-    color: #495057;
+    color: var(--primary-color-dark);
     font-size: 1.1rem;
     margin-bottom: 15px;
   }
@@ -75,9 +75,9 @@
   .file-preview {
     margin-top: 20px;
     padding: 15px;
-    background: #f8f9fa;
+    background: var(--ciel-light);
     border-radius: 8px;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--accent-color);
   }
 
   .selected-file {
@@ -87,7 +87,7 @@
     padding: 10px;
     background: white;
     border-radius: 6px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px rgba(0, 80, 115, 0.05);
   }
 
   .selected-file i {
@@ -97,18 +97,26 @@
 
   .selected-file span {
     flex-grow: 1;
-    color: #2d3748;
+    color: var(--primary-color-dark);
     font-weight: 500;
   }
 
   .btn-outline-danger {
     padding: 4px 8px;
     font-size: 0.9rem;
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    background: #fff;
+  }
+
+  .btn-outline-danger:hover {
+    background: var(--danger-color);
+    color: #fff;
   }
 
   .upload-section.has-file {
     border-color: var(--primary-color);
-    background: #f8f9fa;
+    background: var(--ciel-light);
   }
 
   .btn-analyze {
@@ -120,12 +128,12 @@
     color: white;
     font-weight: 500;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 80, 115, 0.1);
   }
 
   .btn-analyze:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 12px rgba(0, 80, 115, 0.15);
     background: var(--primary-color-dark);
   }
 
@@ -144,7 +152,7 @@
     background: white;
     border-radius: 12px;
     margin-bottom: 30px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 5px 15px rgba(0, 80, 115, 0.05);
     transition: transform 0.3s ease;
   }
 
@@ -159,14 +167,14 @@
   }
 
   .feature-card h3 {
-    color: #2c3e50;
+    color: var(--primary-color-dark);
     font-size: 1.3rem;
     margin-bottom: 15px;
     font-weight: 600;
   }
 
   .feature-card p {
-    color: #6c757d;
+    color: var(--accent-color);
     font-size: 1rem;
     line-height: 1.6;
   }
@@ -176,7 +184,7 @@
     padding: 15px 20px;
     margin-bottom: 20px;
     border: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px rgba(0, 80, 115, 0.05);
   }
 
   .alert-success {
@@ -185,8 +193,8 @@
   }
 
   .alert-danger {
-    background-color: #f8d7da;
-    color: #721c24;
+    background-color: #ffeded;
+    color: var(--danger-color);
   }
 
   @media (max-width: 768px) {

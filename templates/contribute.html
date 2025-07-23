@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}MATHE Text Analysis Platform - Contribute to Research{% endblock %}
+{% block title %}iMedius Text Analysis Platform - Contribute to Research{% endblock %}
 
 {% block extra_styles %}
 <style>
@@ -13,7 +13,7 @@
     border-radius: 12px;
     padding: 40px;
     margin-bottom: 30px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 80, 115, 0.1);
   }
 
   .contribute-icon {
@@ -23,7 +23,7 @@
   }
 
   .dataset-upload {
-    border: 2px dashed #ccc;
+    border: 2px dashed var(--accent-color);
     border-radius: 8px;
     padding: 20px;
     text-align: center;
@@ -73,7 +73,7 @@
     background: var(--primary-color);
     color: white;
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgba(0, 80, 115, 0.1);
   }
 
   .sentiment-btn.positive.active {
@@ -82,13 +82,26 @@
   }
 
   .sentiment-btn.negative.active {
-    background: #dc3545;
-    border-color: #dc3545;
+    background: var(--danger-color);
+    border-color: var(--danger-color);
   }
 
   .submit-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+
+  .btn.btn-primary,
+  .submit-btn {
+    margin-top: 0;
+  }
+
+  .d-flex.gap-2.align-items-center.mt-3 {
+    margin-top: 18px;
+  }
+
+  .btn-upload-dataset {
+    margin-top: 18px;
   }
 </style>
 {% endblock %}
@@ -112,7 +125,7 @@
         <div class="col-md-6">
           <div class="contribute-card">
             <h3>Upload Labeled Dataset</h3>
-            <p>Share your labeled Greek text datasets to help improve our models.</p>
+            <p>Share your labeled Greek text datasets to help improve our models. Please make sure that it contains only two columns: the text column which is named "text" and the sentiment column which is named "sentiment".</p>
             <form method="POST" enctype="multipart/form-data" action="/contribute/dataset">
               <div class="dataset-upload">
                 <i class="fas fa-file-upload fa-3x mb-3"></i>
@@ -123,7 +136,7 @@
                 <label>Dataset Description</label>
                 <textarea class="form-control" name="description" rows="3" required></textarea>
               </div>
-              <div class="form-group">
+              <div class="form-group" style="margin-bottom: 18px;">
                 <label>License</label>
                 <select class="form-control" name="license" required>
                   <option value="cc-by">Creative Commons Attribution</option>
@@ -131,7 +144,7 @@
                   <option value="cc-by-nc">Creative Commons Attribution-NonCommercial</option>
                 </select>
               </div>
-              <button type="submit" class="btn btn-primary">Upload Dataset</button>
+              <button type="submit" class="btn btn-primary btn-upload-dataset">Upload Dataset</button>
             </form>
           </div>
         </div>
@@ -160,8 +173,10 @@
                   <label>Additional Comments (Optional)</label>
                   <textarea class="form-control" name="comments" rows="2"></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary submit-btn" id="submit-annotation" disabled>Submit Annotation</button>
-                <button type="button" class="btn btn-secondary" onclick="loadNewText()">Skip</button>
+                <div class="d-flex gap-2 align-items-center mt-3">
+                  <button type="submit" class="btn btn-primary submit-btn" id="submit-annotation" disabled>Submit Annotation</button>
+                  <button type="button" class="btn btn-secondary" onclick="loadNewText()">Skip</button>
+                </div>
               </form>
             </div>
           </div>

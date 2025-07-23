@@ -1,0 +1,8 @@
+CSV file: files/temp/pharm_small_test.csv
+Summary file: summaries/pharm_small_test_summary_20250604_184409.txt
+
+Number of words in original text: 2286
+Number of words in summary: 236
+Compression Ratio: 0.103
+Compression Percentage: 89.68%
+Redundancy Score: 0.305

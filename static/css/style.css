@@ -1,17 +1,28 @@
+/* Updated Blue-Green Ciel Color Palette */
+:root {
+    --ciel-light: #94ecff;
+    --ciel-bg: #e1fbff;
+    --ciel-accent: #71c7ec;
+    --ciel-primary: #1ebbd7;
+    --ciel-secondary: #107dac;
+    --ciel-dark: #005073;
+}
+
 /* Topic-Specific Analysis Styles */
 .topic-specific-analysis {
     margin-top: 2rem;
     padding: 1rem;
-    background-color: #f8f9fa;
+    background-color: var(--ciel-bg);
     border-radius: 8px;
 }
 
 .topic-card {
-    background-color: white;
+    background-color: #fff;
     border-radius: 8px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0,80,115,0.08);
+    border: 1px solid var(--ciel-accent);
 }
 
 .topic-header {
@@ -19,12 +30,12 @@
 }
 
 .topic-header h5 {
-    color: #2c3e50;
+    color: var(--ciel-dark);
     margin-bottom: 0.5rem;
 }
 
 .topic-words {
-    color: #666;
+    color: var(--ciel-secondary);
     font-size: 0.9rem;
 }
 
@@ -55,26 +66,26 @@
 
 .sentiment-stats .stat-card {
     flex: 1;
-    background-color: #f8f9fa;
+    background-color: var(--ciel-light);
     padding: 1rem;
     border-radius: 8px;
     text-align: center;
 }
 
 .sentiment-stats .stat-card h6 {
-    color: #2c3e50;
+    color: var(--ciel-dark);
     margin-bottom: 0.5rem;
 }
 
 .uncertainty-stats {
-    background-color: #f8f9fa;
+    background-color: var(--ciel-light);
     padding: 1rem;
     border-radius: 8px;
     margin: 1rem 0;
 }
 
 .uncertainty-stats h6 {
-    color: #2c3e50;
+    color: var(--ciel-dark);
     margin-bottom: 0.5rem;
 }
 
@@ -88,7 +99,8 @@
 .sentiment-plots img {
     width: 100%;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0,80,115,0.10);
+    border: 1px solid var(--ciel-accent);
 }
 
 .topic-results {
@@ -98,21 +110,21 @@
 }
 
 .no-summary, .no-analysis {
-    color: #666;
+    color: var(--ciel-secondary);
     font-style: italic;
     padding: 1rem;
-    background-color: #f8f9fa;
+    background-color: var(--ciel-bg);
     border-radius: 4px;
 }
 
 .summary-section {
-    background-color: #f8f9fa;
+    background-color: var(--ciel-bg);
     padding: 1rem;
     border-radius: 4px;
 }
 
 .summary-section h6 {
-    color: #2c3e50;
+    color: var(--ciel-dark);
     margin-bottom: 0.5rem;
 }
 
@@ -122,7 +134,7 @@
 
 .summary-meta {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--ciel-secondary);
 }
 
 .summary-meta p {
@@ -130,9 +142,9 @@
 }
 
 .summary-error {
-    color: #dc3545;
+    color: #fff;
     padding: 0.5rem;
-    background-color: #f8d7da;
+    background-color: var(--ciel-primary);
     border-radius: 4px;
     margin: 0.5rem 0;
 } 

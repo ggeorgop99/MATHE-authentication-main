@@ -21,7 +21,7 @@ import sentimark  # Import the sentimark module
 
 # Available models for UI dropdown
 AVAILABLE_MODELS = [
-    "sentistrength",  # Add sentistrength as an option
+    "sentistrength",  
     "pharmSpellchecked",
     "pharm_translated_greek_spellchecked",
     "datasetSpellchecked_TL_On_pharmSpellchecked",
@@ -30,8 +30,25 @@ AVAILABLE_MODELS = [
     "datasetAndPharmSpellchecked"
 ]
 
+# Display names for UI dropdown (more descriptive)
+MODEL_DISPLAY_NAMES = {
+    "sentistrength": "SentiStrength (Rule-based)",
+    "pharmSpellchecked": "PharmSpellchecked (Social Media/Hate Speech)",
+    "pharm_translated_greek_spellchecked": "Pharm Translated Greek (Sociopolitical in smaller scale)",
+    "datasetSpellchecked_TL_On_pharmSpellchecked": "Skroutz Transfer Learning on Pharm (General but with more domain knowledge)",
+    "datasetSpellchecked": "Large Homebrew Skroutz Scraped Dataset (Product Reviews)",
+    "datasetAndPharmTranslatedSpellchecked": "Skroutz & Pharm Translated (General)",
+    "datasetAndPharmSpellchecked": "Skroutz & Pharm Combined (Broad Coverage)"
+}
+
 # Available testing methods for UI dropdown
 TESTING_METHODS = ["classic", "mc"]
+
+# Display names for testing methods dropdown (more descriptive)
+TESTING_METHOD_DISPLAY_NAMES = {
+    "classic": "Classic Neural Network Prediction",
+    "mc": "Monte Carlo Dropout Prediction"
+}
 
 def mc_dropout_predict(model, x, n_samples=100):
     """
@@ -276,7 +293,18 @@ def perform_sentiment_analysis(file_name, model_name, testing_method="mc", uncer
 
         # Load original data for reference
         df_original = pd.read_csv(original_dataset_path)
-        original_texts = df_original.iloc[:, 0].values  # Get the first column (original text)
+        
+        # Handle case where original and preprocessed files have different numbers of rows
+        # This can happen when preprocessing filters out empty rows
+        if len(df_original) != len(df_preprocessed):
+            print(f"Warning: Original file has {len(df_original)} rows, preprocessed file has {len(df_preprocessed)} rows")
+            print("This is likely due to preprocessing filtering out empty rows.")
+            print("Using only the preprocessed data for analysis.")
+            
+            # Use the preprocessed text as both original and preprocessed
+            original_texts = X_test.copy()
+        else:
+            original_texts = df_original.iloc[:, 0].values  # Get the first column (original text)
 
         # Make predictions
         print("Making predictions...")
