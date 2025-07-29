@@ -118,8 +118,14 @@ git clone https://github.com/ggeorgop99/ML-techniques-on-journalistic-content-em
 
 2. Install system dependencies (Linux/WSL only):
 ```bash
-sudo apt-get update
-sudo apt-get install hunspell
+sudo apt update
+sudo apt install libhunspell-dev hunspell
+sudo apt install -y  autoconf libtool  gettext autopoint
+sudo apt install hunspell-el
+# now in your env: 
+pip install https://github.com/MSeal/cython_hunspell/archive/refs/tags/2.0.3.tar.gz
+# gotta get the greek dictionaries from greek hunspell folder and put them in the hunspell dics
+# in this location ~/.local/lib/python3.10/site-packages/hunspell/dictionaries
 ```
 
 3. Install required Python packages:

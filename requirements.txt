@@ -1,13 +1,13 @@
 #Project needs to run on ubuntu based system due to depencencies (Hunspell)
 #Python version 3.10.12
 
-# sudo apt update
-# sudo apt install libhunspell-dev hunspell
-# pip install cyhunspell
-# sudo apt install -y  autoconf libtool  gettext autopoint
-# pip install https://github.com/MSeal/cython_hunspell/archive/refs/tags/2.0.3.tar.gz
-# sudo apt install hunspell-el
-# gotta get the greek dictionaries from greek hunspell folder and put them in the hunspell dics
+# First do globally:
+# 1) sudo apt update
+# 2) sudo apt install libhunspell-dev hunspell
+# 3) sudo apt install -y  autoconf libtool  gettext autopoint
+# 5) sudo apt install hunspell-el
+# 6) now in your env: pip install https://github.com/MSeal/cython_hunspell/archive/refs/tags/2.0.3.tar.gz
+# 7) gotta get the greek dictionaries from greek hunspell folder and put them in the hunspell dics
 # in this location ~/.local/lib/python3.10/site-packages/hunspell/dictionaries
 
 corextopic==1.1
